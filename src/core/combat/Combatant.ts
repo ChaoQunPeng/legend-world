@@ -1,4 +1,6 @@
 import { calculateCombatStats } from './stats'
+import { Skill } from '../skill/Skill'
+import type { SkillDefinition } from '../skill/Skill'
 
 /** 战斗属性结构，供基础配置、最终属性汇总与统一伤害计算共用。 */
 export interface CombatStats {
@@ -15,12 +17,15 @@ export interface CombatantOptions {
   id: string
   name: string
   stats: Readonly<CombatStats>
+  /** 单位拥有的技能配置；空列表表示只使用普通攻击，顺序表示释放优先级。 */
+  skills: readonly SkillDefinition[]
 }
 
 /** 角色与怪物共用的战斗能力，生命和魔法只在此处维护。 */
 export abstract class Combatant {
   readonly id: string
   readonly name: string
+  readonly skills: readonly Skill[]
   private readonly baseStats: CombatStats
   private healthValue: number
   private manaValue: number
@@ -29,6 +34,8 @@ export abstract class Combatant {
   protected constructor(options: CombatantOptions) {
     this.id = options.id
     this.name = options.name
+    // 角色和怪物均从自身配置加载技能，冷却仍由战斗按单位独立维护。
+    this.skills = options.skills.map((definition) => new Skill(definition))
     this.baseStats = { ...options.stats }
     this.healthValue = options.stats.maxHealth
     this.manaValue = options.stats.maxMana

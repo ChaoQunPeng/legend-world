@@ -1,7 +1,6 @@
 import type { Character } from '../character/Character'
 import type { Combatant } from './Combatant'
 import type { Monster } from '../monster/Monster'
-import type { Skill } from '../skill/Skill'
 import { Item } from '../item/Item'
 import { Battle } from './Battle'
 
@@ -39,16 +38,14 @@ export class CombatSession {
   private readonly battle = new Battle()
   private readonly character: Character
   private readonly monster: Monster
-  private readonly skill: Skill
   private statusValue: CombatStatus = 'idle'
   private nextActionMs = 1000
   private readonly history: CombatRecord[] = []
 
   /** 每场独立创建技能冷却和记录，参与者实例由页面统一提供。 */
-  constructor(character: Character, monster: Monster, skill: Skill) {
+  constructor(character: Character, monster: Monster) {
     this.character = character
     this.monster = monster
-    this.skill = skill
   }
 
   /** 界面据此禁用开始按钮，并在结束时停止时间推进。 */
@@ -86,14 +83,14 @@ export class CombatSession {
     }
   }
 
-  /** 角色优先尝试重击，冷却或魔法不足时普通攻击；怪物只使用普通攻击。 */
+  /** 双方均按自身技能列表顺序尝试，每次行动最多释放一个技能，均不可用时普攻。 */
   private act(attacker: Combatant, target: Combatant, timeMs: number): void {
-    if (attacker === this.character) {
-      const cast = this.battle.castSkill(attacker, target, this.skill, timeMs)
+    for (const skill of attacker.skills) {
+      const cast = this.battle.castSkill(attacker, target, skill, timeMs)
       if (cast.success) {
         for (const effect of cast.effects) {
           if (effect.type === 'damage' || effect.type === 'physicalDamage') {
-            this.recordDamage(attacker, target, this.skill.name, effect.amount, timeMs)
+            this.recordDamage(attacker, target, skill.name, effect.amount, timeMs)
           }
         }
         return

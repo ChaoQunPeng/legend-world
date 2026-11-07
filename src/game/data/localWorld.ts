@@ -1,5 +1,6 @@
-import { Character, Item, Monster, Skill } from '../../core'
+import { Character, Item, Monster } from '../../core'
 import type { CharacterOptions, ItemDefinition, MonsterDefinition } from '../../core'
+import { localSkills } from './localSkills'
 
 /** 本地初始角色配置，使用现有战士职业与基础战斗属性。 */
 const characterOptions: CharacterOptions = {
@@ -7,6 +8,8 @@ const characterOptions: CharacterOptions = {
   name: '初行者',
   characterClass: 'warrior',
   level: 1,
+  // 当前按列表顺序尝试技能，重击仍为首选；学习条件后续另行实现。
+  skills: [localSkills.heavyStrike, localSkills.powerStrike, localSkills.selfHeal, localSkills.drainingStrike],
   stats: {
     maxHealth: 120,
     maxMana: 30,
@@ -23,6 +26,8 @@ const wolfDefinition: MonsterDefinition = {
   name: '野狼',
   rank: 'normal',
   level: 1,
+  // 普通野狼没有魔法，暂不配置技能；其他怪物可在自身定义中引用通用技能。
+  skills: [],
   stats: {
     maxHealth: 80,
     maxMana: 0,
@@ -55,7 +60,6 @@ const starterItems: readonly ItemDefinition[] = [
 export interface LocalWorld {
   character: Character
   monster: Monster
-  skill: Skill
 }
 
 /** 每次进入页面创建独立的满状态单位；当前阶段不接入存档或远端接口。 */
@@ -67,10 +71,5 @@ export function createLocalWorld(): LocalWorld {
   return {
     character,
     monster: new Monster('local-monster-1', wolfDefinition),
-    // 重击只对本次最终攻击增加 6，伤害仍由公共公式减去目标最终防御。
-    skill: new Skill({
-      id: 'heavy-strike', name: '重击', manaCost: 5, cooldownMs: 3000,
-      effects: [{ type: 'physicalDamage', target: 'target', attackBonus: 6 }],
-    }),
   }
 }

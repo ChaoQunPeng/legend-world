@@ -65,7 +65,7 @@ function readBattleView(session: CombatSession, world: LocalWorld): BattleView {
 
 /** 每个世界独立创建仓库；快照始终读取场景与战斗共用的真实单位实例。 */
 export function createGameStore(world: LocalWorld) {
-  const session = new CombatSession(world.character, world.monster, world.skill)
+  const session = new CombatSession(world.character, world.monster)
 
   /** 战斗推进和穿脱装备时统一重读模型，保持属性、背包和战斗奖励同步。 */
   function readWorld() {
