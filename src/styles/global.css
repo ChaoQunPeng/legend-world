@@ -95,6 +95,19 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: clamp(32px
 .battle-log .battle-log__result { color: #eadbbd; }
 .battle-note { margin: 14px 0 0; color: #788e9b; font-size: 11px; line-height: 1.7; }
 
+/* 信息面板复用业务快照，临时布局置于侧栏内，不遮挡战斗操作。 */
+.unit-panel-controls { display: flex; gap: 10px; margin-top: 16px; }
+.unit-panel-controls button, .unit-info-panel button { padding: 8px 12px; border: 1px solid #c7a87560; border-radius: 6px; background: #263746; color: #eadbbd; font: inherit; font-size: 12px; cursor: pointer; }
+.unit-panel-controls button[aria-pressed="true"] { border-color: #c7a875; background: #3a4141; }
+.unit-panel-controls button:focus-visible, .unit-info-panel button:focus-visible { outline: 2px solid #eadbbd; outline-offset: 3px; }
+.unit-info-panel { margin-top: 12px; padding: 16px; border: 1px solid #c7a87560; border-radius: 10px; }
+.unit-info-panel__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.unit-info-panel h2 { margin: 0; font-size: 15px; font-weight: 500; }
+.unit-info-panel__fields { display: grid; gap: 10px; margin: 16px 0 0; font-size: 12px; }
+.unit-info-panel__fields div { display: flex; justify-content: space-between; gap: 12px; }
+.unit-info-panel__fields dt { flex-shrink: 0; color: #acb7be; }
+.unit-info-panel__fields dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+
 @keyframes damage-rise {
   from { opacity: 1; transform: translateY(8px); }
   to { opacity: 0; transform: translateY(-30px); }
