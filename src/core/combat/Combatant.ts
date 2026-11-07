@@ -1,4 +1,6 @@
-/** 基础战斗属性；攻击与防御字段暂不绑定尚未确定的伤害公式。 */
+import { calculateCombatStats } from './stats'
+
+/** 战斗属性结构，供基础配置、最终属性汇总与统一伤害计算共用。 */
 export interface CombatStats {
   maxHealth: number
   maxMana: number
@@ -8,7 +10,7 @@ export interface CombatStats {
   magicDefense: number
 }
 
-/** 创建战斗单位所需的数据；实例 ID 由调用方生成。 */
+/** 创建战斗单位所需的数据；stats 为职业或怪物配置提供的基础属性，实例 ID 由调用方生成。 */
 export interface CombatantOptions {
   id: string
   name: string
@@ -32,9 +34,10 @@ export abstract class Combatant {
     this.manaValue = options.stats.maxMana
   }
 
-  /** 返回属性快照，调用方不能通过修改快照影响单位。 */
+  /** 基础属性来自静态配置；角色和怪物均通过统一入口提供最终属性快照。 */
   get stats(): Readonly<CombatStats> {
-    return { ...this.baseStats }
+    // 当前未接入装备系统，不传装备加成，最终属性等于基础属性。
+    return calculateCombatStats(this.baseStats)
   }
 
   /** 当前生命由战斗方法维护。 */
@@ -62,7 +65,7 @@ export abstract class Combatant {
   /** 恢复非负生命值并返回实际恢复量；普通治疗不能复活死亡单位。 */
   restoreHealth(amount: number): number {
     if (!this.isAlive) return 0
-    const actual = Math.min(amount, this.baseStats.maxHealth - this.healthValue)
+    const actual = Math.min(amount, this.stats.maxHealth - this.healthValue)
     this.healthValue += actual
     return actual
   }
@@ -76,8 +79,9 @@ export abstract class Combatant {
 
   /** 恢复非负魔法值并返回实际恢复量，不超过魔法上限。 */
   restoreMana(amount: number): number {
-    const actual = Math.min(amount, this.baseStats.maxMana - this.manaValue)
+    const actual = Math.min(amount, this.stats.maxMana - this.manaValue)
     this.manaValue += actual
     return actual
   }
 }
+

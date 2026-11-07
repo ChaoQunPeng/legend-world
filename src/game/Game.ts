@@ -1,11 +1,12 @@
 import { Application } from 'pixi.js'
 import { WorldScene } from './scenes/WorldScene'
 import { worldConfig } from './scenes/worldConfig'
+import type { LocalWorld } from './data/localWorld'
 
 /** 游戏运行时：封装 PixiJS 和浏览器生命周期，React 无需管理场景细节。 */
 export class Game {
   private readonly app = new Application()
-  private readonly scene = new WorldScene()
+  private readonly scene: WorldScene
   private readonly host: HTMLElement
   private readonly resizeObserver: ResizeObserver
   private pixelRatioQuery: MediaQueryList | null = null
@@ -13,8 +14,9 @@ export class Game {
   private disposed = false
 
   /** 每个宿主创建一个实例；构造后调用一次 init，卸载时调用 destroy。 */
-  constructor(host: HTMLElement) {
+  constructor(host: HTMLElement, localWorld: LocalWorld) {
     this.host = host
+    this.scene = new WorldScene(localWorld)
     this.resizeObserver = new ResizeObserver(this.resize)
     this.app.stage.addChild(this.scene.view)
   }

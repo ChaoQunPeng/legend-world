@@ -1,13 +1,19 @@
 import type { Combatant } from '../combat/Combatant'
+import { calculateDamage } from '../combat/calculations'
 
-/** 先支持即时数值效果；持续效果和伤害公式尚未纳入本轮。 */
-export type EffectType = 'damage' | 'heal' | 'restoreMana'
+/** 即时效果支持固定数值与按最终属性计算的物理伤害，暂不包含持续效果。 */
+export type EffectType = 'damage' | 'physicalDamage' | 'heal' | 'restoreMana'
 
-/** amount 为非负固定数值，target 明确作用于释放者还是技能目标。 */
-export interface EffectDefinition {
-  readonly type: EffectType
+/** 固定效果使用非负 amount；物理伤害使用本次攻击加成，target 明确作用对象。 */
+export type EffectDefinition = {
+  readonly type: 'damage' | 'heal' | 'restoreMana'
   readonly target: 'self' | 'target'
   readonly amount: number
+} | {
+  /** 物理技能在统一公式中增加本次攻击，不直接指定扣血量。 */
+  readonly type: 'physicalDamage'
+  readonly target: 'target'
+  readonly attackBonus: number
 }
 
 /** 结构化效果记录，保留实际变化量，供未来生成战斗日志。 */
@@ -29,18 +35,21 @@ export class Effect {
   /** 通过单位公开方法更新状态，不直接访问其内部生命和魔法。 */
   apply(caster: Combatant, target: Combatant): EffectResult {
     const recipient = this.definition.target === 'self' ? caster : target
-    const { type, amount } = this.definition
+    const { type } = this.definition
     let actual: number
 
-    switch (type) {
+    switch (this.definition.type) {
       case 'damage':
-        actual = recipient.takeDamage(amount)
+        actual = recipient.takeDamage(this.definition.amount)
+        break
+      case 'physicalDamage':
+        actual = recipient.takeDamage(calculateDamage(caster.stats, recipient.stats, this.definition))
         break
       case 'heal':
-        actual = recipient.restoreHealth(amount)
+        actual = recipient.restoreHealth(this.definition.amount)
         break
       case 'restoreMana':
-        actual = recipient.restoreMana(amount)
+        actual = recipient.restoreMana(this.definition.amount)
         break
     }
 

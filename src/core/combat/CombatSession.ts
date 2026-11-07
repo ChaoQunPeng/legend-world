@@ -1,0 +1,129 @@
+import type { Character } from '../character/Character'
+import type { Combatant } from './Combatant'
+import type { Monster } from '../monster/Monster'
+import type { Skill } from '../skill/Skill'
+import { Item } from '../item/Item'
+import { Battle } from './Battle'
+
+/** 单场战斗只能从待开始进入战斗，胜负确定后不能再次推进或领取奖励。 */
+export type CombatStatus = 'idle' | 'running' | 'victory' | 'defeat'
+
+/** 实际攻击记录供界面展示伤害、技能名和目标剩余生命。 */
+export interface DamageRecord {
+  type: 'damage'
+  id: number
+  timeMs: number
+  attackerId: string
+  attackerName: string
+  targetId: string
+  targetName: string
+  actionName: string
+  damage: number
+  targetHealth: number
+}
+
+/** 战斗结束记录包含本次实际发放的奖励，战败没有奖励。 */
+export interface CombatEndRecord {
+  type: 'end'
+  id: number
+  timeMs: number
+  outcome: 'victory' | 'defeat'
+  experience: number
+  items: readonly Item[]
+}
+
+export type CombatRecord = DamageRecord | CombatEndRecord
+
+/** 单场自动交战：只使用外部逻辑时间，核心不创建定时器或依赖界面。 */
+export class CombatSession {
+  private readonly battle = new Battle()
+  private readonly character: Character
+  private readonly monster: Monster
+  private readonly skill: Skill
+  private statusValue: CombatStatus = 'idle'
+  private nextActionMs = 1000
+  private readonly history: CombatRecord[] = []
+
+  /** 每场独立创建技能冷却和记录，参与者实例由页面统一提供。 */
+  constructor(character: Character, monster: Monster, skill: Skill) {
+    this.character = character
+    this.monster = monster
+    this.skill = skill
+  }
+
+  /** 界面据此禁用开始按钮，并在结束时停止时间推进。 */
+  get status(): CombatStatus {
+    return this.statusValue
+  }
+
+  /** 返回记录快照，界面不能修改核心维护的记录顺序。 */
+  get records(): readonly CombatRecord[] {
+    return [...this.history]
+  }
+
+  /** 只允许开始一次；已死亡单位不能进入新的战斗。 */
+  start(): boolean {
+    if (this.statusValue !== 'idle' || !this.character.isAlive || !this.monster.isAlive) return false
+    this.statusValue = 'running'
+    return true
+  }
+
+  /**
+   * 推进到战斗开始后的累计毫秒；首次行动在第 1 秒，此后双方每秒行动。
+   * 同时行动时角色先手，击杀后怪物不再反击；按每个行动点处理，保证长短推进一致。
+   */
+  advanceTo(elapsedMs: number): void {
+    while (this.statusValue === 'running' && this.nextActionMs <= elapsedMs) {
+      const timeMs = this.nextActionMs
+      this.nextActionMs += 1000
+      this.act(this.character, this.monster, timeMs)
+      if (!this.monster.isAlive) {
+        this.finish('victory', timeMs)
+        break
+      }
+      this.act(this.monster, this.character, timeMs)
+      if (!this.character.isAlive) this.finish('defeat', timeMs)
+    }
+  }
+
+  /** 角色优先尝试重击，冷却或魔法不足时普通攻击；怪物只使用普通攻击。 */
+  private act(attacker: Combatant, target: Combatant, timeMs: number): void {
+    if (attacker === this.character) {
+      const cast = this.battle.castSkill(attacker, target, this.skill, timeMs)
+      if (cast.success) {
+        for (const effect of cast.effects) {
+          if (effect.type === 'damage' || effect.type === 'physicalDamage') {
+            this.recordDamage(attacker, target, this.skill.name, effect.amount, timeMs)
+          }
+        }
+        return
+      }
+    }
+    const attack = this.battle.attack(attacker, target)
+    if (attack.success) this.recordDamage(attacker, target, '普通攻击', attack.damage, timeMs)
+  }
+
+  /** 记录实际扣血量，最后一击不会显示超过目标剩余生命的伤害。 */
+  private recordDamage(attacker: Combatant, target: Combatant, actionName: string, damage: number, timeMs: number): void {
+    this.history.push({
+      type: 'damage', id: this.history.length, timeMs,
+      attackerId: attacker.id, attackerName: attacker.name,
+      targetId: target.id, targetName: target.name,
+      actionName, damage, targetHealth: target.health,
+    })
+  }
+
+  /** 先结束战斗再发奖，后续推进不会重复进入结算；战败发放 0 经验和空掉落。 */
+  private finish(outcome: 'victory' | 'defeat', timeMs: number): void {
+    this.statusValue = outcome
+    const experience = outcome === 'victory' ? this.monster.rewards.experience : 0
+    const items = outcome === 'victory'
+      ? this.monster.rewards.drops.map((definition, index) => new Item(`${this.monster.id}-drop-${index}`, definition))
+      : []
+    if (outcome === 'victory') {
+      this.character.gainExperience(experience)
+      for (const item of items) this.character.receiveItem(item)
+    }
+    this.history.push({ type: 'end', id: this.history.length, timeMs, outcome, experience, items })
+  }
+}

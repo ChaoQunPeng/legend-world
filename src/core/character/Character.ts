@@ -1,5 +1,6 @@
 import { Combatant } from '../combat/Combatant'
 import type { CombatantOptions } from '../combat/Combatant'
+import type { Item } from '../item/Item'
 
 /** 第一阶段支持的角色职业。 */
 export type CharacterClass = 'warrior' | 'mage' | 'taoist'
@@ -14,11 +15,33 @@ export interface CharacterOptions extends CombatantOptions {
 export class Character extends Combatant {
   readonly characterClass: CharacterClass
   readonly level: number
+  private experienceValue = 0
+  private readonly obtainedItems: Item[] = []
 
   /** 根据已选职业的初始配置创建角色。 */
   constructor(options: CharacterOptions) {
     super(options)
     this.characterClass = options.characterClass
     this.level = options.level
+  }
+
+  /** 当前只累计经验，等级曲线和升级属性在后续成长任务中实现。 */
+  get experience(): number {
+    return this.experienceValue
+  }
+
+  /** 返回已获得物品的列表快照；当前只收集战利品，不承担背包堆叠和穿戴。 */
+  get items(): readonly Item[] {
+    return [...this.obtainedItems]
+  }
+
+  /** 战斗胜利结算时发放经验，结算次数由单场战斗协调器保证。 */
+  gainExperience(amount: number): void {
+    this.experienceValue += amount
+  }
+
+  /** 接收已经创建的独立掉落实例，使界面展示真实获得的物品。 */
+  receiveItem(item: Item): void {
+    this.obtainedItems.push(item)
   }
 }
