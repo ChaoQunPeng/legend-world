@@ -36,8 +36,15 @@ export abstract class Combatant {
 
   /** 基础属性来自静态配置；角色和怪物均通过统一入口提供最终属性快照。 */
   get stats(): Readonly<CombatStats> {
-    // 当前未接入装备系统，不传装备加成，最终属性等于基础属性。
+    // 公共单位提供基础属性，角色在此基础上叠加已穿戴装备。
     return calculateCombatStats(this.baseStats)
+  }
+
+  /** 卸下或替换增加生命、魔法上限的装备时压回新上限；穿戴不恢复资源。 */
+  protected clampVitalsToStats(): void {
+    const stats = this.stats
+    this.healthValue = Math.min(this.healthValue, stats.maxHealth)
+    this.manaValue = Math.min(this.manaValue, stats.maxMana)
   }
 
   /** 当前生命由战斗方法维护。 */

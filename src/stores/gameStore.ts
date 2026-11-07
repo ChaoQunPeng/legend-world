@@ -1,12 +1,11 @@
 import { createStore } from 'zustand/vanilla'
 import { CombatSession } from '../core'
-import type { CombatRecord, CombatStatus, DamageRecord } from '../core'
+import type { CombatRecord, CombatStatus, DamageRecord, EquipmentSlot } from '../core'
 import type { LocalWorld } from '../game/data/localWorld'
 import { readCharacterInfo, readMonsterInfo } from '../game/panels/unitInfo'
 import type { UnitInfo } from '../game/panels/unitInfo'
-
-/** 当前本地世界只有一名角色和一只怪物，面板一次查看其中一个单位。 */
-export type InfoPanelTarget = 'character' | 'monster'
+import { readInventory } from '../game/panels/inventory'
+import type { InventoryView } from '../game/panels/inventory'
 
 /** UI 直接消费战斗展示数据，不在组件内查询、解释战斗记录。 */
 interface BattleView {
@@ -27,10 +26,9 @@ export interface GameState {
   readonly experience: number
   readonly obtainedItems: string
   readonly battle: BattleView
-  readonly panelTarget: InfoPanelTarget | null
-  readonly panel: UnitInfo | null
-  readonly openPanel: (target: InfoPanelTarget) => void
-  readonly closePanel: () => void
+  readonly inventory: InventoryView
+  readonly equipItem: (itemId: string) => void
+  readonly unequipItem: (slot: EquipmentSlot) => void
   readonly startBattle: () => void
 }
 
@@ -69,36 +67,38 @@ function readBattleView(session: CombatSession, world: LocalWorld): BattleView {
 export function createGameStore(world: LocalWorld) {
   const session = new CombatSession(world.character, world.monster, world.skill)
 
-  /** 战斗推进和打开面板时统一重读模型，避免缓存首次打开时的生命或经验。 */
+  /** 战斗推进和穿脱装备时统一重读模型，保持属性、背包和战斗奖励同步。 */
   function readWorld() {
     return {
       character: readCharacterInfo(world.character), monster: readMonsterInfo(world.monster),
       experience: world.character.experience,
-      obtainedItems: world.character.items.length === 0 ? '暂无' : world.character.items.map((item) => `${item.name} × 1`).join('、'),
+      obtainedItems: session.records.filter((record) => record.type === 'end').flatMap((record) => record.items).map((item) => `${item.name} × 1`).join('、') || '暂无',
+      inventory: readInventory(world.character),
       battle: readBattleView(session, world),
     }
   }
 
-  const store = createStore<GameState>((set) => ({
-    ...readWorld(), panelTarget: null, panel: null,
-    /** 面板切换只读取信息，不启动战斗，也不修改单位状态。 */
-    openPanel: (target) => {
-      const snapshot = readWorld()
-      set({ ...snapshot, panelTarget: target, panel: snapshot[target] })
+  const store = createStore<GameState>(() => ({
+    ...readWorld(),
+    /** 穿戴或替换装备后同步发布背包、装备栏和角色最终属性。 */
+    equipItem: (itemId) => {
+      world.character.equip(itemId)
+      refresh()
     },
-    /** 关闭后保留单位与战斗进度，下次打开重新读取当前信息。 */
-    closePanel: () => set({ panelTarget: null, panel: null }),
+    /** 卸下装备回包，下一次战斗行动立即使用更新后的属性。 */
+    unequipItem: (slot) => {
+      world.character.unequip(slot)
+      refresh()
+    },
     /** 开始约束由核心协调器保证，重复调用不会重开或重复结算。 */
     startBattle: () => {
       if (session.start()) refresh()
     },
   }))
 
-  /** 一次发布战斗和单位快照，打开的面板与血条、奖励保持同一时间点。 */
+  /** 一次发布全部快照，常驻面板与血条、装备和奖励保持同一时间点。 */
   function refresh(): void {
-    const snapshot = readWorld()
-    const target = store.getState().panelTarget
-    store.setState({ ...snapshot, panel: target === null ? null : snapshot[target] })
+    store.setState(readWorld())
   }
 
   /** 核心仍只接收逻辑时间；浏览器或其他宿主可以使用相同入口推进战斗。 */
@@ -115,7 +115,7 @@ export function createGameStore(world: LocalWorld) {
 export function connectBattleClock(game: ReturnType<typeof createGameStore>): () => void {
   let timer: ReturnType<typeof setInterval> | undefined
 
-  /** 仅运行中的战斗需要采样；面板开关不会重置战斗起始时间。 */
+  /** 仅运行中的战斗需要采样；穿脱装备与面板更新不会重置战斗起始时间。 */
   function syncClock(): void {
     if (game.store.getState().battle.status === 'running') {
       if (timer !== undefined) return

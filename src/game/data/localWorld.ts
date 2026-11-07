@@ -1,5 +1,5 @@
-import { Character, Monster, Skill } from '../../core'
-import type { CharacterOptions, MonsterDefinition } from '../../core'
+import { Character, Item, Monster, Skill } from '../../core'
+import type { CharacterOptions, ItemDefinition, MonsterDefinition } from '../../core'
 
 /** 本地初始角色配置，使用现有战士职业与基础战斗属性。 */
 const characterOptions: CharacterOptions = {
@@ -37,6 +37,20 @@ const wolfDefinition: MonsterDefinition = {
   },
 }
 
+/** 本地体验物品：同部位武器便于查看替换，材料与战斗掉落统一进入背包。 */
+const starterItems: readonly ItemDefinition[] = [
+  { id: 'wood-sword', name: '木剑', type: 'equipment', quality: 'normal', equipment: { slot: 'weapon', stats: { attack: 3 } } },
+  { id: 'iron-sword', name: '精铁剑', type: 'equipment', quality: 'uncommon', equipment: { slot: 'weapon', stats: { attack: 7 } } },
+  { id: 'cloth-helmet', name: '布帽', type: 'equipment', quality: 'normal', equipment: { slot: 'helmet', stats: { defense: 1 } } },
+  { id: 'cloth-armor', name: '布衣', type: 'equipment', quality: 'normal', equipment: { slot: 'armor', stats: { defense: 3 } } },
+  { id: 'cloth-boots', name: '布靴', type: 'equipment', quality: 'normal', equipment: { slot: 'boots', stats: { defense: 1 } } },
+  { id: 'copper-necklace', name: '铜项链', type: 'equipment', quality: 'uncommon', equipment: { slot: 'necklace', stats: { magicDefense: 2 } } },
+  { id: 'copper-ring', name: '铜戒指', type: 'equipment', quality: 'normal', equipment: { slot: 'ring', stats: { attack: 1 } } },
+  { id: 'iron-ore', name: '铁矿石', type: 'material', quality: 'normal' },
+  { id: 'iron-ore', name: '铁矿石', type: 'material', quality: 'normal' },
+  { id: 'leather', name: '皮革', type: 'material', quality: 'normal' },
+]
+
 /** 页面与场景共用的本地单位，避免各自创建不同的战斗实例。 */
 export interface LocalWorld {
   character: Character
@@ -46,8 +60,12 @@ export interface LocalWorld {
 
 /** 每次进入页面创建独立的满状态单位；当前阶段不接入存档或远端接口。 */
 export function createLocalWorld(): LocalWorld {
+  const character = new Character(characterOptions)
+  for (const [index, definition] of starterItems.entries()) {
+    character.receiveItem(new Item(`starter-${index}`, definition))
+  }
   return {
-    character: new Character(characterOptions),
+    character,
     monster: new Monster('local-monster-1', wolfDefinition),
     // 重击只对本次最终攻击增加 6，伤害仍由公共公式减去目标最终防御。
     skill: new Skill({

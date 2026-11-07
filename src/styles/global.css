@@ -1,4 +1,4 @@
-/* DOM 负责标题与状态提示，世界美术由 PixiJS 绘制。 */
+/* 工作台使用 DOM 展示角色与背包，整页自然滚动，所有面板常驻可见。 */
 :root {
   font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: #eadbbd;
@@ -8,56 +8,24 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
-
 * { box-sizing: border-box; }
 body { margin: 0; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid #eadbbd; outline-offset: 3px; }
+.world { min-height: 100svh; padding: 28px clamp(16px, 3vw, 48px) 32px; }
+.world__header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; max-width: 1800px; margin: 0 auto 28px; }
+.world__eyebrow { margin: 0 0 8px; color: #c7a875; font-size: 10px; letter-spacing: 0.35em; }
+h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font-weight: 500; letter-spacing: 0.2em; }
+.world__message { margin: 0 0 4px; color: #acb7be; font-size: 12px; letter-spacing: 0.15em; }
 
-/* 宿主始终具有明确高度，适配移动端动态地址栏。 */
-.world {
-  position: relative;
-  height: 100svh;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.game-canvas, .game-canvas__host { position: absolute; inset: 0; }
-.game-canvas { right: 568px; }
-.game-canvas__host canvas { display: block; }
-
-/* 标题不拦截场景指针事件，为后续游戏交互保留画布输入。 */
-.world__header {
-  position: absolute;
-  top: max(36px, env(safe-area-inset-top));
-  left: max(40px, env(safe-area-inset-left));
-  right: 592px;
-  pointer-events: none;
-}
-
-.world__eyebrow { margin: 0 0 12px; color: #c7a875; font-size: 11px; letter-spacing: 0.35em; }
-h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: clamp(32px, 6vw, 56px); font-weight: 500; letter-spacing: 0.2em; }
-.world__message { margin: 16px 0 0; color: #acb7be; font-size: 13px; letter-spacing: 0.15em; }
-.world__status { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); width: 100%; margin: 0; color: #acb7be; text-align: center; font-size: 12px; pointer-events: none; }
-.game-canvas__error { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; padding: 24px; background: #111c29; text-align: center; line-height: 1.8; }
-
-/* 桌面将战斗面板放在场景右侧，面板可滚动以适配较矮窗口。 */
-.world__battle-panel {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  bottom: 24px;
-  width: 520px;
-  overflow-y: auto;
-  padding: 20px;
-  border: 1px solid #c7a87540;
-  border-radius: 16px;
-  background: #111c29f2;
-}
-.world__units {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-}
+/* 桌面以三列同时展示人物、背包、战斗；每列允许内容收缩，长文本正常换行。 */
+.world__dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; gap: 20px; max-width: 1800px; margin: auto; }
+.dashboard-panel { min-width: 0; padding: 20px; border: 1px solid #c7a87540; border-radius: 14px; background: #142130; }
+.world__battle-panel > .combatant-card { margin-top: 20px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.section-heading h2 { margin: 0; font-size: 18px; font-weight: 500; }
+.section-heading > span { color: #acb7be; font-size: 12px; }
+.panel-hint { margin: 14px 0 0; color: #8d9eab; font-size: 11px; line-height: 1.8; }
 .combatant-card { padding: 18px 20px; border: 1px solid #c7a87540; border-radius: 12px; background: #111c29ed; }
 .combatant-card__header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
 .combatant-card__category { margin: 0 0 6px; color: #acb7be; font-size: 11px; }
@@ -95,41 +63,60 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: clamp(32px
 .battle-log .battle-log__result { color: #eadbbd; }
 .battle-note { margin: 14px 0 0; color: #788e9b; font-size: 11px; line-height: 1.7; }
 
-/* 信息面板复用业务快照，临时布局置于侧栏内，不遮挡战斗操作。 */
-.unit-panel-controls { display: flex; gap: 10px; margin-top: 16px; }
-.unit-panel-controls button, .unit-info-panel button { padding: 8px 12px; border: 1px solid #c7a87560; border-radius: 6px; background: #263746; color: #eadbbd; font: inherit; font-size: 12px; cursor: pointer; }
-.unit-panel-controls button[aria-pressed="true"] { border-color: #c7a875; background: #3a4141; }
-.unit-panel-controls button:focus-visible, .unit-info-panel button:focus-visible { outline: 2px solid #eadbbd; outline-offset: 3px; }
-.unit-info-panel { margin-top: 12px; padding: 16px; border: 1px solid #c7a87560; border-radius: 10px; }
-.unit-info-panel__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.unit-info-panel h2 { margin: 0; font-size: 15px; font-weight: 500; }
+/* 角色与怪物的基础信息始终展开，各面板的标题拥有独立 ID。 */
+.unit-info-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid #c7a87530; }
+.unit-info-panel h2 { margin: 0; color: #c7a875; font-size: 14px; font-weight: 500; }
 .unit-info-panel__fields { display: grid; gap: 10px; margin: 16px 0 0; font-size: 12px; }
 .unit-info-panel__fields div { display: flex; justify-content: space-between; gap: 12px; }
 .unit-info-panel__fields dt { flex-shrink: 0; color: #acb7be; }
 .unit-info-panel__fields dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+
+/* 装备部位与物品卡片以文字直接说明品质、部位和属性，穿脱按钮保持可见。 */
+.equipment-panel { margin-top: 24px; }
+.equipment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.equipment-slot { display: flex; flex-direction: column; align-items: flex-start; min-height: 140px; gap: 10px; padding: 12px; border: 1px dashed #52606a80; border-radius: 8px; background: #111c29; }
+.equipment-slot--occupied { border-style: solid; border-color: #c7a87560; }
+.equipment-slot__label { color: #acb7be; font-size: 11px; }
+.equipment-slot__empty { margin: auto; color: #718393; font-size: 12px; }
+.equipment-slot button { margin-top: auto; }
+.item-details { display: flex; min-width: 0; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
+.item-name { font-size: 14px; font-weight: 500; }
+.item-name--normal { color: #eadbbd; }
+.item-name--uncommon { color: #8bcba6; }
+.item-name--rare { color: #8cbce9; }
+.item-name--epic { color: #c39aea; }
+.item-details__meta { color: #8d9eab; font-size: 11px; }
+.item-details__bonuses { color: #c7b68e; font-size: 12px; line-height: 1.6; }
+.inventory-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.inventory-filters button, .inventory-item button, .equipment-slot button { padding: 7px 12px; border: 1px solid #c7a87550; border-radius: 6px; background: #263746; color: #eadbbd; font-size: 12px; }
+.inventory-filters button[aria-pressed="true"] { border-color: #c7a875; background: #3a4141; }
+.inventory-item button:hover, .equipment-slot button:hover { border-color: #dfc28e; background: #354650; }
+.inventory-list { display: grid; gap: 10px; }
+.inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; border: 1px solid #52606a60; border-left: 3px solid #7b8c97; border-radius: 8px; background: #111c29; }
+.inventory-item--uncommon { border-left-color: #8bcba6; }
+.inventory-item--rare { border-left-color: #8cbce9; }
+.inventory-item--epic { border-left-color: #c39aea; }
+.inventory-item button, .inventory-item__quantity { flex-shrink: 0; }
+.inventory-item__quantity { color: #c7a875; font-size: 14px; font-variant-numeric: tabular-nums; }
+.inventory-empty { padding: 32px 16px; color: #8d9eab; text-align: center; font-size: 13px; line-height: 1.8; }
 
 @keyframes damage-rise {
   from { opacity: 1; transform: translateY(8px); }
   to { opacity: 0; transform: translateY(-30px); }
 }
 
-/* 窄屏先展示场景，再自然排列操作区，避免日志和按钮遮挡单位。 */
-@media (max-width: 1000px) {
-  .world { height: auto; min-height: 100svh; overflow: visible; padding-top: 340px; }
-  .game-canvas { inset: 0 0 auto; height: 340px; }
-  .world__header { top: 24px; left: 24px; right: 24px; }
-  .world__message { margin-top: 8px; }
-  .world__battle-panel { position: relative; inset: auto; width: calc(100% - 32px); margin: 0 auto 24px; overflow: visible; }
+/* 平板保留角色与背包并排，战斗区移至下方；手机按人物、背包、战斗顺序排列。 */
+@media (max-width: 1100px) {
+  .world__dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .world__battle-panel { grid-column: 1 / -1; }
 }
-
-@media (max-width: 600px) {
-  .world__header { top: max(24px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); }
-  .world__battle-panel { width: calc(100% - 24px); padding: 14px; }
-  .world__units { gap: 8px; }
-  .combatant-card { padding: 12px; }
-  .combatant-card__header { flex-wrap: wrap; margin-bottom: 12px; }
-  .combatant-card h2 { font-size: 17px; }
-  .combatant-card__stats { grid-template-columns: 1fr; gap: 6px; }
+@media (max-width: 680px) {
+  .world { padding: 20px 12px; }
+  .world__header { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
+  .world__dashboard { grid-template-columns: minmax(0, 1fr); }
+  .world__battle-panel { grid-column: auto; }
+  .dashboard-panel { padding: 16px; }
+  .combatant-card { padding: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
