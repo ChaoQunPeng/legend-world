@@ -1,0 +1,43 @@
+/* DOM 负责标题与状态提示，世界美术由 PixiJS 绘制。 */
+:root {
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: #eadbbd;
+  background: #111c29;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+/* 宿主始终具有明确高度，适配移动端动态地址栏。 */
+.world {
+  position: relative;
+  height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.game-canvas, .game-canvas__host { position: absolute; inset: 0; }
+.game-canvas__host canvas { display: block; }
+
+/* 标题不拦截场景指针事件，为后续游戏交互保留画布输入。 */
+.world__header {
+  position: absolute;
+  top: max(36px, env(safe-area-inset-top));
+  left: max(40px, env(safe-area-inset-left));
+  right: 24px;
+  pointer-events: none;
+}
+
+.world__eyebrow { margin: 0 0 12px; color: #c7a875; font-size: 11px; letter-spacing: 0.35em; }
+h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: clamp(32px, 6vw, 56px); font-weight: 500; letter-spacing: 0.2em; }
+.world__message { margin: 16px 0 0; color: #acb7be; font-size: 13px; letter-spacing: 0.15em; }
+.world__status { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); width: 100%; margin: 0; color: #acb7be; text-align: center; font-size: 12px; pointer-events: none; }
+.game-canvas__error { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; padding: 24px; background: #111c29; text-align: center; line-height: 1.8; }
+
+@media (max-width: 600px) {
+  .world__header { top: max(24px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); }
+}
