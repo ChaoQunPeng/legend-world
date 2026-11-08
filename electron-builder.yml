@@ -1,0 +1,21 @@
+# 仅分发桌面入口和 Vite 产物，安装包与 Web 构建分目录存放。
+appId: com.legendworld.desktop
+productName: Legend World
+directories:
+  output: release
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+asar: true
+mac:
+  category: public.app-category.games
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+linux:
+  category: Game
+  target:
+    - AppImage

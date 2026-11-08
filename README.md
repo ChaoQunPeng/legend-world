@@ -1,6 +1,6 @@
 # 传奇世界 · Legend World
 
-独立的 Web 游戏项目，参考爱可小镇的技术栈创建，不依赖爱可小镇的源码或运行环境。
+独立的 Web / Electron 桌面游戏项目，参考爱可小镇的技术栈创建，不依赖爱可小镇的源码或运行环境。
 
 ## 技术栈
 
@@ -17,6 +17,31 @@ pnpm dev
 ```
 
 同一时间运行多个 Vite 项目时，以终端实际输出的端口访问。
+
+## Electron 客户端
+
+已集成 Electron 桌面入口和 electron-builder 打包配置，现有 `pnpm dev` 仍用于 Web 开发。
+
+```sh
+# 启动桌面开发模式，自动启动 Vite，支持页面热更新
+pnpm dev:electron
+
+# 构建 Web 页面后，在桌面窗口打开本地产物
+pnpm build
+pnpm start:electron
+
+# 生成当前系统的应用目录，便于检查打包内容
+pnpm pack:electron
+
+# 生成当前系统的安装包
+pnpm build:electron
+```
+
+安装包输出到 `release/`：macOS 为 DMG、Windows 为 NSIS 安装程序、Linux 为 AppImage。建议在对应操作系统构建安装包。当前尚未配置自定义图标、发行签名或自动更新。
+
+`electron/main.cjs` 管理桌面窗口和系统生命周期；`scripts/electron-dev.mjs` 等待 Vite 监听后启动 Electron，并在客户端退出时关闭开发服务。渲染页面启用沙箱与上下文隔离，不开放 Node.js 权限。首次启动开发客户端时，Electron 会按需下载当前系统的运行时，需要网络连接。
+
+桌面集成沿用现有游戏行为，不新增角色存档；客户端关闭后角色和背包仍会重置。怪物编辑器的浏览器本地配置存放在 Electron 自己的用户数据目录中，不与浏览器版本共享。
 
 ## 当前范围
 
