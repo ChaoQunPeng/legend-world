@@ -1,4 +1,17 @@
 import type { CombatStats } from './Combatant'
+import type { RandomSource } from '../random/RandomSource'
+
+/** 当前只读取攻击方命中率，最终概率限制在 0～1，不纳入目标闪避。 */
+export function calculateHitChance(attackerStats: Readonly<CombatStats>): number {
+  return Math.max(0, Math.min(1, attackerStats.hitRate))
+}
+
+/** 普攻与物理技能共用命中判定；必定命中或必定未命中时无需抽取随机数。 */
+export function rollHit(attackerStats: Readonly<CombatStats>, random: RandomSource): boolean {
+  const chance = calculateHitChance(attackerStats)
+  if (chance === 0 || chance === 1) return chance === 1
+  return random() < chance
+}
 
 /** 本次攻击的临时加成，仅影响此次伤害，不写回角色的常驻属性。 */
 export interface AttackParameters {

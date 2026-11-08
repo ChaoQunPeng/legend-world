@@ -1,4 +1,5 @@
 import type { UnitInfo } from '../game/panels/unitInfo'
+import { formatPercentage } from '../game/panels/unitInfo'
 import type { DamageRecord } from '../core'
 
 interface CombatantCardProps {
@@ -26,13 +27,14 @@ export function CombatantCard({ info, hit }: CombatantCardProps) {
         </div>
         <progress className="combatant-card__health" aria-label={`${info.name}生命`} value={info.health} max={stats.maxHealth} />
         <div className="combatant-card__mana">魔法 {info.mana} / {stats.maxMana}</div>
-        {hit && <span key={hit.id} className="combatant-card__damage">−{hit.damage}</span>}
+        {hit && <span key={hit.id} className="combatant-card__damage">{hit.hit ? `−${hit.damage}` : '未命中'}</span>}
       </div>
       <dl className="combatant-card__stats">
         <div><dt>物理攻击</dt><dd>{stats.attack}</dd></div>
         <div><dt>物理防御</dt><dd>{stats.defense}</dd></div>
         <div><dt>魔法攻击</dt><dd>{stats.magicAttack}</dd></div>
         <div><dt>魔法防御</dt><dd>{stats.magicDefense}</dd></div>
+        <div><dt>命中率</dt><dd>{formatPercentage(info.hitChance)}</dd></div>
       </dl>
     </article>
   )

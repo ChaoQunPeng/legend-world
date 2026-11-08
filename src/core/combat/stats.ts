@@ -4,7 +4,7 @@ import type { CombatStats } from './Combatant'
 export type EquipmentStats = Partial<CombatStats>
 
 /**
- * 最终战斗属性的统一计算入口：基础属性加上装备附加属性。
+ * 最终战斗属性的统一加法入口：供装备与被动技能依次汇总加成。
  * 未配置加成的属性按 0 计算，不修改传入的配置。
  */
 export function calculateCombatStats(
@@ -18,5 +18,6 @@ export function calculateCombatStats(
     defense: baseStats.defense + (equipmentStats.defense ?? 0),
     magicAttack: baseStats.magicAttack + (equipmentStats.magicAttack ?? 0),
     magicDefense: baseStats.magicDefense + (equipmentStats.magicDefense ?? 0),
+    hitRate: baseStats.hitRate + (equipmentStats.hitRate ?? 0),
   }
 }

@@ -5,6 +5,10 @@ import type { InventoryView, ItemView } from '../game/panels/inventory'
 interface InventoryPanelProps {
   inventory: InventoryView
   onEquip: (itemId: string) => void
+  onDiscard: (itemId: string, quantity: number) => void
+  onUse: (itemId: string) => void
+  onClaim: (itemId: string) => void
+  message: string
 }
 
 interface EquipmentPanelProps {
@@ -23,7 +27,10 @@ function ItemDetails({ item }: { item: ItemView }) {
     <div className="item-details">
       <strong className={`item-name item-name--${item.quality}`}>{item.name}</strong>
       <span className="item-details__meta">{item.qualityLabel} · {item.slotLabel ?? item.typeLabel}</span>
-      {item.bonuses.length > 0 && <span className="item-details__bonuses">{item.bonuses.join(' · ')}</span>}
+      {item.requirementsLabel && <span className="item-details__meta">{item.requirementsLabel}</span>}
+      {item.effectLabel && <span className="item-details__bonuses">{item.effectLabel} · 存活且未满血可用</span>}
+      {item.bonuses.length > 0 && <span className="item-details__bonuses">基础：{item.bonuses.join(' · ')}</span>}
+      {item.type === 'equipment' && <span className="item-details__bonuses">极品：{item.additionalBonuses.length > 0 ? item.additionalBonuses.join(' · ') : '无额外加成'}</span>}
     </div>
   )
 }
@@ -47,22 +54,38 @@ export function EquipmentPanel({ equipment, onUnequip }: EquipmentPanelProps) {
           </article>
         ))}
       </div>
-      <p className="panel-hint">同部位装备自动替换，卸下后放回背包；属性即时生效。</p>
+      <p className="panel-hint">战斗中可换装，后续行动使用新属性。同部位自动替换，穿脱不恢复生命和魔法。</p>
     </section>
   )
 }
 
-/** 背包按类别筛选，装备逐件操作，材料显示合计数量；战斗掉落随仓库快照自动更新。 */
-export function InventoryPanel({ inventory, onEquip }: InventoryPanelProps) {
+/** 按核心格子展示堆叠、药水与待领取掉落，丢弃必须先确认数量。 */
+export function InventoryPanel({ inventory, onEquip, onDiscard, onUse, onClaim, message }: InventoryPanelProps) {
   const [filter, setFilter] = useState<ItemType | 'all'>('all')
+  const [discardId, setDiscardId] = useState<string | undefined>()
+  // 保留输入文本，支持清空后重新填写；提交时由表单约束整数范围。
+  const [quantity, setQuantity] = useState('1')
+  const discardItem = inventory.items.find((item) => item.id === discardId)
   const items = inventory.items.filter((item) => filter === 'all' || item.type === filter)
 
   return (
     <section className="inventory-panel dashboard-panel" aria-labelledby="inventory-title">
       <header className="section-heading">
         <h2 id="inventory-title">背包</h2>
-        <span>{inventory.itemCount} 件物品</span>
+        <span>{inventory.usedSlots} / {inventory.capacity} 格 · {inventory.itemCount} 件</span>
       </header>
+      <p className="panel-hint">装备每件 1 格 · 材料每格 99 个 · 药水每格 20 瓶</p>
+      <p className="inventory-message" role="status">{message || '满包掉落进入待领取列表，经验照常发放。'}</p>
+      {discardItem && <form className="discard-confirm" aria-label="确认丢弃物品" onSubmit={(event) => {
+        event.preventDefault()
+        onDiscard(discardItem.id, Number(quantity))
+        setDiscardId(undefined)
+      }}>
+        <strong>丢弃「{discardItem.name}」</strong>
+        <label>数量（最多 {discardItem.quantity}）<input aria-label="丢弃数量" type="number" min={1} max={discardItem.quantity} step={1} required value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} /></label>
+        <p>确认后物品将被移除。</p>
+        <div className="inventory-actions"><button type="submit">确认丢弃</button><button type="button" onClick={() => setDiscardId(undefined)}>取消</button></div>
+      </form>}
       <nav className="inventory-filters" aria-label="背包物品分类">
         {filters.map(({ value, label }) => (
           <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>
@@ -72,14 +95,28 @@ export function InventoryPanel({ inventory, onEquip }: InventoryPanelProps) {
         {items.map((item) => (
           <article key={item.id} className={`inventory-item inventory-item--${item.quality}`}>
             <ItemDetails item={item} />
-            {item.type === 'equipment'
-              ? <button type="button" onClick={() => onEquip(item.id)} aria-label={`穿戴${item.name}`}>穿戴</button>
-              : <span className="inventory-item__quantity">× {item.quantity}</span>}
+            <div className="inventory-actions">
+              <span className="inventory-item__quantity">{item.type === 'equipment' ? '1 件 · 1 格' : `${item.quantity} / ${item.maxStack}`}</span>
+              {item.type === 'equipment' && <button type="button" disabled={!item.canEquip} title={item.equipFailure} onClick={() => onEquip(item.id)} aria-label={`穿戴${item.name}`}>{item.canEquip ? '穿戴' : item.equipFailure}</button>}
+              {item.type === 'consumable' && <button type="button" disabled={!item.canUse} onClick={() => onUse(item.id)} aria-label={`使用${item.name}`}>使用</button>}
+              <button type="button" aria-label={`丢弃${item.name}`} onClick={() => {
+                setDiscardId(item.id)
+                setQuantity('1')
+              }}>丢弃</button>
+            </div>
           </article>
         ))}
         {items.length === 0 && <p className="inventory-empty">{filter === 'all' ? '背包暂无物品' : `暂无${filters.find(({ value }) => value === filter)?.label}`}，战斗掉落会自动收入背包。</p>}
       </div>
-      <p className="panel-hint">装备可直接穿戴，材料按种类汇总数量。</p>
+      <p className="panel-hint">药水战斗中也可使用；腾出空间后需手动领取掉落。</p>
+      <section className="pending-items" aria-labelledby="pending-items-title">
+        <header className="section-heading"><h3 id="pending-items-title">待领取掉落</h3><span>{inventory.pendingItems.reduce((sum, item) => sum + item.quantity, 0)} 件</span></header>
+        {inventory.pendingItems.length === 0 && <p className="panel-hint">暂无待领取掉落。</p>}
+        <div className="inventory-list">{inventory.pendingItems.map((item) => <article className="inventory-item" key={item.id}>
+          <ItemDetails item={item} />
+          <div className="inventory-actions"><span className="inventory-item__quantity">× {item.quantity}</span><button type="button" aria-label={`领取${item.name}`} onClick={() => onClaim(item.id)}>领取</button></div>
+        </article>)}</div>
+      </section>
     </section>
   )
 }

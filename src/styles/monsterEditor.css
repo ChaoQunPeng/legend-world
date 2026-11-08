@@ -1,0 +1,45 @@
+/* 编辑器使用独立命名空间，避免影响游戏工作台现有样式。 */
+.monster-editor { max-width: 1240px; margin: 0 auto; padding: 40px 24px; color: #e8e5dd; }
+.monster-editor button, .monster-editor input, .monster-editor select { font: inherit; }
+.monster-editor button { border: 1px solid #45483f; border-radius: 6px; background: #282c26; color: #e8e5dd; padding: 8px 12px; cursor: pointer; }
+.monster-editor button:hover:not(:disabled) { background: #373d31; border-color: #9aab79; }
+.monster-editor button:disabled { opacity: .4; cursor: default; }
+.monster-editor input:not([hidden]), .monster-editor select { width: 100%; min-width: 0; border: 1px solid #45483f; border-radius: 5px; background: #191d19; color: #e8e5dd; padding: 10px 12px; }
+.monster-editor :focus-visible { outline: 2px solid #b2c28e; outline-offset: 3px; }
+.monster-editor h1, .monster-editor h2, .monster-editor h3, .monster-editor p { margin: 0; }
+.monster-editor h1 { font-size: 26px; margin-top: 6px; }
+.monster-editor h2 { font-size: 18px; }
+.monster-editor h3 { font-size: 14px; font-weight: 600; letter-spacing: .06em; color: #b8c59b; }
+.monster-editor__header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 30px; }
+.monster-editor__header p { font-size: 11px; letter-spacing: .16em; color: #a1ac90; }
+.monster-editor__header a { color: #c0cca4; white-space: nowrap; }
+.monster-editor__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; color: #a9afa2; font-size: 13px; }
+.monster-editor__toolbar > div, .monster-editor footer > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.monster-editor__layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); border: 1px solid #3d4438; border-radius: 10px; background: #20251f; overflow: hidden; }
+.monster-editor aside { padding: 20px 16px; border-right: 1px solid #3d4438; background: #1b201b; }
+.monster-editor__section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.monster-editor__section-title p, .monster-editor__section-title > span { color: #a9afa2; font-size: 12px; margin-top: 5px; }
+.monster-editor nav { display: grid; gap: 8px; margin-top: 16px; }
+.monster-editor nav button { text-align: left; padding: 12px; background: transparent; border-color: transparent; overflow-wrap: anywhere; }
+.monster-editor nav button[aria-current=true] { background: #30392a; border-color: #8d9d72; }
+.monster-editor small { display: block; font-size: 12px; color: #a9afa2; margin-top: 4px; overflow-wrap: anywhere; }
+.monster-editor form { padding: 26px; min-width: 0; }
+.monster-editor form section { padding: 24px 0; border-top: 1px solid #3d4438; }
+.monster-editor__fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.monster-editor label { display: grid; gap: 8px; font-size: 12px; color: #b9c0b0; }
+.monster-editor__skill-picker { display: flex; gap: 10px; }
+.monster-editor__skill-picker select { flex: 1; }
+.monster-editor__skill-picker button { flex-shrink: 0; }
+.monster-editor__skills { list-style: none; padding: 0; margin: 16px 0; }
+.monster-editor__skills li { display: flex; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid #3d4438; }
+.monster-editor__skills li > div:first-of-type { flex: 1; min-width: 0; }
+.monster-editor__order { color: #a1ac90; font-size: 12px; font-variant-numeric: tabular-nums; }
+.monster-editor__skill-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.monster-editor__hint, .monster-editor__empty { font-size: 12px; color: #a9afa2; line-height: 1.8; }
+.monster-editor__empty { padding: 24px 0; }
+.monster-editor footer { display: flex; justify-content: space-between; align-items: center; gap: 18px; border-top: 1px solid #3d4438; padding-top: 22px; }
+.monster-editor footer p { flex: 1; font-size: 12px; color: #bac4ad; overflow-wrap: anywhere; }
+.monster-editor .monster-editor__primary { background: #b4c58d; color: #1b2116; border-color: #b4c58d; font-weight: 600; }
+/* 窄屏时列表与表单纵向排列，技能操作可换行。 */
+@media (max-width: 800px) { .monster-editor__layout { grid-template-columns: 190px minmax(0, 1fr); } .monster-editor__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .monster-editor form { padding: 20px; } .monster-editor__skills li { flex-wrap: wrap; } }
+@media (max-width: 580px) { .monster-editor { padding: 24px 12px; } .monster-editor__layout { grid-template-columns: 1fr; } .monster-editor aside { border-right: 0; border-bottom: 1px solid #3d4438; } .monster-editor__header, .monster-editor__toolbar, .monster-editor footer { align-items: flex-start; flex-direction: column; } .monster-editor__fields { grid-template-columns: 1fr; } .monster-editor__skill-picker { flex-wrap: wrap; } }

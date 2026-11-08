@@ -10,6 +10,8 @@ export interface CombatStats {
   defense: number
   magicAttack: number
   magicDefense: number
+  /** 物理攻击命中率，使用 0～1 表示；本阶段不计算目标闪避。 */
+  hitRate: number
 }
 
 /** 创建战斗单位所需的数据；stats 为职业或怪物配置提供的基础属性，实例 ID 由调用方生成。 */
@@ -17,7 +19,7 @@ export interface CombatantOptions {
   id: string
   name: string
   stats: Readonly<CombatStats>
-  /** 单位拥有的技能配置；空列表表示只使用普通攻击，顺序表示释放优先级。 */
+  /** 单位拥有的技能配置；主动技能按顺序尝试，无可用主动技能时普通攻击。 */
   skills: readonly SkillDefinition[]
 }
 
@@ -25,7 +27,7 @@ export interface CombatantOptions {
 export abstract class Combatant {
   readonly id: string
   readonly name: string
-  readonly skills: readonly Skill[]
+  private readonly skillInstances: readonly Skill[]
   private readonly baseStats: CombatStats
   private healthValue: number
   private manaValue: number
@@ -35,10 +37,15 @@ export abstract class Combatant {
     this.id = options.id
     this.name = options.name
     // 角色和怪物均从自身配置加载技能，冷却仍由战斗按单位独立维护。
-    this.skills = options.skills.map((definition) => new Skill(definition))
+    this.skillInstances = options.skills.map((definition) => new Skill(definition))
     this.baseStats = { ...options.stats }
     this.healthValue = options.stats.maxHealth
     this.manaValue = options.stats.maxMana
+  }
+
+  /** 怪物直接使用配置技能；角色通过覆盖此入口，只向战斗提供已经学会的技能。 */
+  get skills(): readonly Skill[] {
+    return this.skillInstances
   }
 
   /** 基础属性来自静态配置；角色和怪物均通过统一入口提供最终属性快照。 */
@@ -82,6 +89,12 @@ export abstract class Combatant {
     const actual = Math.min(amount, this.stats.maxHealth - this.healthValue)
     this.healthValue += actual
     return actual
+  }
+
+  /** 角色手动复活专用：按最终属性重置资源，普通治疗仍不能复活。 */
+  protected refillVitals(): void {
+    this.healthValue = this.stats.maxHealth
+    this.manaValue = this.stats.maxMana
   }
 
   /** 消耗非负魔法值；不足时保持原值，供技能释放返回业务失败。 */

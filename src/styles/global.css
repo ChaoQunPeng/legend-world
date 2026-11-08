@@ -26,6 +26,30 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font
 .section-heading h2 { margin: 0; font-size: 18px; font-weight: 500; }
 .section-heading > span { color: #acb7be; font-size: 12px; }
 .panel-hint { margin: 14px 0 0; color: #8d9eab; font-size: 11px; line-height: 1.8; }
+/* 成长信息紧邻角色血条，升级后可同时观察等级、经验与资源恢复。 */
+.growth-panel { margin-top: 20px; padding: 16px; border: 1px solid #c7a87540; border-radius: 10px; background: #c7a8750c; }
+.growth-panel .section-heading h2 { font-size: 14px; color: #c7a875; }
+.growth-panel__progress-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #acb7be; }
+.growth-panel__progress-label strong { color: #eadbbd; font-weight: 500; font-variant-numeric: tabular-nums; }
+.growth-panel progress { display: block; width: 100%; height: 8px; margin-top: 10px; accent-color: #c7a875; }
+.growth-panel__increases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; font-size: 12px; color: #acb7be; }
+.growth-panel__increases li { display: flex; justify-content: space-between; gap: 6px; }
+.growth-panel__increases strong { color: #8bcba6; font-weight: 500; }
+
+/* 技能目录常驻显示学习条件；已学与锁定状态在窄屏也使用文本直接说明。 */
+.skill-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid #c7a87530; }
+.skill-panel .section-heading h2 { font-size: 16px; }
+.skill-message { color: #dfc28e; font-size: 12px; line-height: 1.7; }
+.skill-list { display: grid; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+.skill-entry { padding: 14px; border: 1px solid #52606a60; border-radius: 8px; background: #111c29; }
+.skill-entry--learned { border-color: #8bcba660; }
+.skill-entry__heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.skill-entry h3 { margin: 0; font-size: 14px; font-weight: 500; }
+.skill-entry__heading span { color: #8d9eab; font-size: 11px; }
+.skill-entry__meta { color: #8d9eab; font-size: 11px; line-height: 1.7; }
+.skill-entry__effects { color: #c7b68e; font-size: 12px; line-height: 1.7; }
+.skill-entry button { padding: 7px 12px; border: 1px solid #c7a87580; border-radius: 6px; background: #263746; color: #eadbbd; font-size: 12px; }
+.skill-entry button:disabled { cursor: default; opacity: 0.6; }
 .combatant-card { padding: 18px 20px; border: 1px solid #c7a87540; border-radius: 12px; background: #111c29ed; }
 .combatant-card__header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
 .combatant-card__category { margin: 0 0 6px; color: #acb7be; font-size: 11px; }
@@ -36,7 +60,9 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font
 .combatant-card__stats dt { color: #acb7be; }
 .combatant-card__stats dd { margin: 0; font-variant-numeric: tabular-nums; }
 
-.battle-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* 挂机状态与操作分行，复活入口出现时也能在三列工作台内正常换行。 */
+.battle-controls { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.battle-controls__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .battle-controls__status { margin: 0; color: #eadbbd; font-size: 20px; }
 .battle-controls__hint { margin: 8px 0 0; color: #acb7be; font-size: 11px; line-height: 1.6; }
 .battle-controls button { flex-shrink: 0; padding: 12px 18px; border: 1px solid #dfc28e; border-radius: 8px; background: #c7a875; color: #172536; font: inherit; font-size: 14px; cursor: pointer; }
@@ -91,6 +117,7 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font
 .inventory-filters button, .inventory-item button, .equipment-slot button { padding: 7px 12px; border: 1px solid #c7a87550; border-radius: 6px; background: #263746; color: #eadbbd; font-size: 12px; }
 .inventory-filters button[aria-pressed="true"] { border-color: #c7a875; background: #3a4141; }
 .inventory-item button:hover, .equipment-slot button:hover { border-color: #dfc28e; background: #354650; }
+.inventory-item button:disabled { cursor: default; color: #8d9eab; background: #202e3b; border-color: #52606a60; }
 .inventory-list { display: grid; gap: 10px; }
 .inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; border: 1px solid #52606a60; border-left: 3px solid #7b8c97; border-radius: 8px; background: #111c29; }
 .inventory-item--uncommon { border-left-color: #8bcba6; }
@@ -122,4 +149,20 @@ h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font
 @media (prefers-reduced-motion: reduce) {
   .combatant-card__damage { animation: none; font-size: 18px; }
   .combatant-card__health::-webkit-progress-value { transition: none; }
+}
+
+/* 背包操作与数量确认在窄屏换行，避免挤压物品名称。 */
+.inventory-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.inventory-message { min-height: 2.8em; color: #dfc28e; font-size: 13px; line-height: 1.6; }
+.discard-confirm { display: grid; gap: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #dfb28b; border-radius: 8px; background: #302a29; }
+.discard-confirm label { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px; }
+.discard-confirm input { width: 80px; padding: 8px; color: #f3e4ca; background: #111c29; border: 1px solid #c7a87580; border-radius: 4px; }
+.discard-confirm p { margin: 0; font-size: 12px; color: #d5bda4; }
+.discard-confirm button { padding: 7px 12px; color: #eadbbd; background: #263746; border: 1px solid #c7a87580; border-radius: 6px; }
+.inventory-actions button:disabled { cursor: default; opacity: 0.45; }
+.pending-items { margin-top: 24px; padding-top: 20px; border-top: 1px solid #52606a60; }
+.pending-items h3 { margin: 0; font-size: 15px; }
+@media (max-width: 600px) {
+  .inventory-item { flex-wrap: wrap; }
+  .inventory-actions { margin-left: auto; }
 }

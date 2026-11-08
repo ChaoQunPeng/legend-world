@@ -1,0 +1,10 @@
+/** 同一入口保留成长回归，并覆盖背包、消耗品与页面仓库同步。 */
+import './growth.test'
+import './inventory.test'
+import './equipment.test'
+import './drops.test'
+import './skills.test'
+import './passiveSkills.test'
+import './hit.test'
+import './monsterSkills.test'
+import './idleCombat.test'

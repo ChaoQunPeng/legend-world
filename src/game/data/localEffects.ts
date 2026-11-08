@@ -2,6 +2,10 @@ import type { EffectDefinition } from '../../core'
 
 /** 本地效果配置集中维护；技能引用配置，核心 Effect 负责执行状态变化。 */
 export const localEffects = {
+  /** 野狼撕咬：本次物攻增加 4，复用命中判定与统一减防公式。 */
+  wolfBite: {
+    type: 'physicalDamage', target: 'target', attackBonus: 4,
+  },
   /** 重击：仅为本次物理攻击增加 6，再按公共公式扣除目标防御。 */
   heavyStrike: {
     type: 'physicalDamage',

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "vite build --ssr tests/index.test.ts --outDir node_modules/.tmp/core-tests && node --test node_modules/.tmp/core-tests/index.test.js",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",

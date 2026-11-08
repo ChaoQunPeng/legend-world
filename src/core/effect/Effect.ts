@@ -17,42 +17,50 @@ export type EffectDefinition = {
 }
 
 /** 结构化效果记录，保留实际变化量，供未来生成战斗日志。 */
-export interface EffectResult {
-  type: EffectType
+export type EffectResult = {
+  type: 'physicalDamage'
+  targetId: string
+  amount: number
+  hit: boolean
+} | {
+  type: 'damage' | 'heal' | 'restoreMana'
   targetId: string
   amount: number
 }
 
 /** 将配置中的即时效果转换为战斗单位的状态变化。 */
 export class Effect {
+  readonly type: EffectType
   private readonly definition: EffectDefinition
 
   /** 复制配置，避免外部修改对象影响已经创建的效果。 */
   constructor(definition: EffectDefinition) {
     this.definition = { ...definition }
+    this.type = definition.type
   }
 
-  /** 通过单位公开方法更新状态，不直接访问其内部生命和魔法。 */
-  apply(caster: Combatant, target: Combatant): EffectResult {
+  /** 战斗传入整次物理技能的命中结果；直接应用即时效果默认生效，恢复效果不判命中。 */
+  apply(caster: Combatant, target: Combatant, physicalHit = true): EffectResult {
     const recipient = this.definition.target === 'self' ? caster : target
-    const { type } = this.definition
+    const definition = this.definition
+    if (definition.type === 'physicalDamage') {
+      const amount = physicalHit ? recipient.takeDamage(calculateDamage(caster.stats, recipient.stats, definition)) : 0
+      return { type: 'physicalDamage', targetId: recipient.id, amount, hit: physicalHit }
+    }
     let actual: number
 
-    switch (this.definition.type) {
+    switch (definition.type) {
       case 'damage':
-        actual = recipient.takeDamage(this.definition.amount)
-        break
-      case 'physicalDamage':
-        actual = recipient.takeDamage(calculateDamage(caster.stats, recipient.stats, this.definition))
+        actual = recipient.takeDamage(definition.amount)
         break
       case 'heal':
-        actual = recipient.restoreHealth(this.definition.amount)
+        actual = recipient.restoreHealth(definition.amount)
         break
       case 'restoreMana':
-        actual = recipient.restoreMana(this.definition.amount)
+        actual = recipient.restoreMana(definition.amount)
         break
     }
 
-    return { type, targetId: recipient.id, amount: actual }
+    return { type: definition.type, targetId: recipient.id, amount: actual }
   }
 }
