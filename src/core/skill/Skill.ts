@@ -6,6 +6,8 @@ import type { CombatStats } from '../combat/Combatant'
 export type SkillDefinition = {
   readonly id: string
   readonly name: string
+  /** 面向玩家的技能说明；旧配置未填写时仍展示自动生成的效果规则。 */
+  readonly description?: string
 } & ({
   readonly type: 'active'
   readonly manaCost: number

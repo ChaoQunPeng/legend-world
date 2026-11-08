@@ -109,9 +109,9 @@ export function readMonsterInfo(monster: Monster): UnitInfo {
       { label: '技能优先级', value: monster.skillDefinitions.length === 0 ? '仅普通攻击' : monster.skillDefinitions.map((skill) => skill.name).join(' → ') },
       ...monster.skillDefinitions.map((skill): InfoField => ({
         label: `技能 · ${skill.name}`,
-        value: skill.type === 'active'
+        value: [skill.description?.trim(), skill.type === 'active'
           ? `耗魔 ${skill.manaCost} · 冷却 ${skill.cooldownMs / 1000} 秒 · ${skill.effects.map(describeEffect).join('；')}；冷却或魔法不足时尝试后续技能，均不可用时普攻`
-          : '被动技能',
+          : '被动技能'].filter(Boolean).join('；'),
       })),
       { label: '击杀经验', value: monster.rewards.experience },
       { label: '独立掉落概率', value: monster.rewards.drops.length === 0 ? '无' : monster.rewards.drops.map(({ item, probability }) => `${item.name} × 1（${probability * 100}%）`).join('、') },

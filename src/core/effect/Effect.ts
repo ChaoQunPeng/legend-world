@@ -6,6 +6,9 @@ export type EffectType = 'damage' | 'physicalDamage' | 'heal' | 'restoreMana'
 
 /** 固定效果使用非负 amount；物理伤害使用本次攻击加成，target 明确作用对象。 */
 export type EffectDefinition = {
+  /** 面向玩家的效果说明；可选以兼容已有配置，缺省时按类型和数值生成说明。 */
+  readonly description?: string
+} & ({
   readonly type: 'damage' | 'heal' | 'restoreMana'
   readonly target: 'self' | 'target'
   readonly amount: number
@@ -14,7 +17,7 @@ export type EffectDefinition = {
   readonly type: 'physicalDamage'
   readonly target: 'target'
   readonly attackBonus: number
-}
+})
 
 /** 结构化效果记录，保留实际变化量，供未来生成战斗日志。 */
 export type EffectResult = {

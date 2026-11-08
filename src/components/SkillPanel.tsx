@@ -22,6 +22,7 @@ export function SkillPanel({ book, message, onLearn }: SkillPanelProps) {
           <li key={skill.id} className={`skill-entry${skill.learned ? ' skill-entry--learned' : ''}`}>
             <div className="skill-entry__content"><div className="skill-entry__heading"><h3>{skill.name}{skill.learned ? ` · Lv.${skill.level}` : ''}</h3><span>{skill.type === 'passive' ? '被动' : `主动 · 优先级 ${skill.priority}`}</span></div>
             <p className="skill-entry__meta">{skill.profession} · 需要 Lv.{skill.requiredLevel}{skill.type === 'active' ? ` · 耗魔 ${skill.manaCost} · 冷却 ${skill.cooldownSeconds} 秒` : ' · 不占用行动'}</p>
+            {skill.description?.trim() && <p className="skill-entry__description">{skill.description}</p>}
             <p className="skill-entry__effects">{skill.effects.join('；')}</p>
             {skill.type === 'passive' && <p className="skill-entry__meta">学习只增加生命上限，不恢复当前生命。</p>}
             </div><button type="button" disabled={!skill.canLearn} onClick={() => onLearn(skill.id)} aria-label={`学习${skill.name}`}>

@@ -35,7 +35,7 @@ export function parseMonsterDocument(json: string): MonsterEditorDocument {
       }
     }
     for (const skill of monster.skills) {
-      if (!skill || typeof skill.id !== 'string' || typeof skill.name !== 'string'
+      if (!skill || (skill.description !== undefined && typeof skill.description !== 'string') || typeof skill.id !== 'string' || typeof skill.name !== 'string'
         || (skill.type !== 'active' && skill.type !== 'passive')
         || (skill.type === 'active' && (!Array.isArray(skill.effects) || !Number.isFinite(skill.cooldownMs) || !Number.isFinite(skill.manaCost)))
         || (skill.type === 'passive' && !skill.stats)) {

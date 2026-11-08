@@ -32,9 +32,9 @@ button:hover:enabled { background-color: var(--bg-hover); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 .game-icon { width: 14px; height: 14px; flex-shrink: 0; }
 
-/* 1280px 主区域、3/6/3 栏宽、16px 栏间距对应参考稿桌面布局。 */
+/* 主页铺满可用宽度，保留 8px 外边距和栏间距，让三栏内容充分利用屏幕。 */
 .world { min-height: 100svh; }
-.world__header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px max(24px, calc((100vw - 1280px) / 2)); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 4px 6px #0000001a; }
+.world__header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 4px 6px #0000001a; }
 .world__identity { display: flex; align-items: center; gap: 8px; }
 .world__identity > span { padding: 2px 8px; font-size: 14px; font-weight: 700; color: #f59e0b; border: 1px solid #f59e0b66; border-radius: 4px; background: #451a0333; }
 .world__identity small { padding: 2px 6px; font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; }
@@ -50,9 +50,9 @@ progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
 .header-vital--mana { min-width: 95px; color: #c084fc; --progress-color: #9333ea; }
 .header-vital--experience { min-width: 85px; color: #fcd34d; --progress-color: #d97706; }
 .editor-link { color: var(--text-secondary); font-size: 10px; text-decoration: none; }
-.world__dashboard { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 6fr) minmax(0, 3fr); align-items: start; gap: 16px; max-width: 1280px; margin: auto; padding: 16px; }
-.dashboard-panel { min-width: 0; padding: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
-.world__battle-panel, .world__sidebar { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.world__dashboard { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 6fr) minmax(0, 3fr); align-items: start; gap: 8px; padding: 8px; }
+.dashboard-panel { min-width: 0; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
+.world__battle-panel, .world__sidebar { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); }
 .section-heading h2 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
 .section-heading > span { font-size: 10px; color: var(--text-secondary); }
@@ -104,7 +104,8 @@ progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
 .battlefield .section-heading h2 { font-weight: 400; }
 .battlefield .section-heading h2 strong { color: var(--text-primary); }
 .battlefield .game-icon { color: #f59e0b; }
-.battlefield__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 460px; aspect-ratio: 1; margin: auto; padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: inset 0 2px 4px #0000000d; }
+/* 战场横向铺满面板，高度保留原有上限；窄屏随视口缩小，六行格子均分高度。 */
+.battlefield__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); gap: 6px; width: 100%; height: min(460px, 80vw); padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: inset 0 2px 4px #0000000d; }
 .battlefield__cell { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; min-width: 0; border: 1px solid transparent; border-radius: 4px; font-size: 14px; font-weight: 600; color: #e5e7eb66; user-select: none; }
 .battlefield__cell strong { font-size: inherit; letter-spacing: .05em; }
 .battlefield__cell--player { color: var(--color-primary); background: #451a034d; box-shadow: 0 0 0 1px #f59e0b99; text-shadow: 0 0 6px #c6a56b33; }
@@ -188,7 +189,7 @@ progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
 .entity-radar__row small { color: var(--text-secondary); font-size: 10px; }
 .game-navigation { display: none; }
 
-/* 与参考稿相同，1024px 以下由底部入口切换面板，640px 以下缩小留白。 */
+/* 1024px 以下由底部入口切换面板，移动端保持紧凑留白并避开底部导航。 */
 @media (max-width: 1023px) {
   .world__dashboard { display: block; padding-bottom: 80px; }
   .world__character, .world__battle-panel, .world__sidebar, .world__inventory, .world__skills, .entity-radar { display: none; }
@@ -205,15 +206,13 @@ progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
   .game-navigation button[aria-current="page"] { color: #fbbf24; font-weight: 700; }
 }
 @media (max-width: 639px) {
-  .world__header { padding: 8px 12px; }
+  .world__header { padding: 8px; }
   .world__identity > span { font-size: 12px; }
   .world__identity small { font-size: 11px; }
   .header-vitals { order: 3; width: 100%; margin: 0; }
   .header-vital { flex: 1; }
   .world__dashboard { padding: 8px 8px calc(80px + env(safe-area-inset-bottom, 0px)); }
-  .world__battle-panel { gap: 12px; }
-  .dashboard-panel { padding: 12px; }
-  .battlefield { padding: 10px; }
+  .dashboard-panel { padding: 8px; }
   .battlefield__grid { gap: 4px; padding: 6px; }
   .battlefield__cell { font-size: 12px; }
   .target-heading strong { font-size: 14px; }
@@ -223,3 +222,5 @@ progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
   .combatant-card__damage { animation: none; }
   progress::-webkit-progress-value { transition: none; }
 }
+/* 玩家技能文案保留策划填写的换行，规则数值仍在下方单独显示。 */
+.skill-entry__description { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -26,6 +26,7 @@ export function readSkillBook(character: Character) {
       const result = character.checkLearnSkill(skill.id)
       return {
         id: skill.id, name: skill.name, type: skill.type,
+        description: skill.description,
         priority: skill.type === 'active' ? ++activePriority : undefined,
         // 未学技能没有当前等级；已学等级读取核心实例，学习后默认为一级。
         level: learned.get(skill.id)?.level,

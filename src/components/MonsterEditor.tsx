@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import type { MonsterDefinition } from '../core'
 import type { CombatStats } from '../core/combat/Combatant'
-import { localSkills } from '../game/data/localSkills'
+import { createAbilityDocument, loadAbilityDocument } from '../game/data/abilityEditorStorage'
 import { starterItems } from '../game/data/localWorld'
 import { MonsterDropEditor } from './MonsterDropEditor'
 import { createMonsterDocument, loadMonsterDocument, parseMonsterDocument, saveMonsterDocument } from '../game/data/monsterEditorStorage'
@@ -18,7 +18,6 @@ const statFields: { key: keyof CombatStats; label: string; min: number; max?: nu
   { key: 'magicDefense', label: '魔法防御', min: 0, step: 1 },
   { key: 'hitRate', label: '命中率（0～1）', min: 0, max: 1, step: 0.01 },
 ]
-const skills = Object.values(localSkills)
 
 /** 浏览器文件选择器的最小契约；不支持此能力的浏览器使用 JSON 下载。 */
 interface FileWriter {
@@ -31,6 +30,12 @@ interface SaveFileWindow {
 
 /** 独立的怪物配置工作台，编辑草稿与已保存快照分开维护。 */
 export function MonsterEditor() {
+  // 技能目录仅在进入页面时读取，已关联技能保留原有快照；存储读取失败时明确提示。
+  const [catalog] = useState(() => {
+    try { return { skills: loadAbilityDocument().skills, error: '' } }
+    catch (error) { return { skills: createAbilityDocument().skills, error: `技能目录读取失败，已使用项目技能：${String(error)}` } }
+  })
+  const skills = catalog.skills
   const [initial] = useState(() => {
     try { return { document: loadMonsterDocument(), message: '配置保存在当前浏览器中，建议导出文件备份。' } }
     catch (error) { return { document: createMonsterDocument(), message: `读取本地配置失败，已显示项目模板：${String(error)}` } }
@@ -40,7 +45,7 @@ export function MonsterEditor() {
   const [selectedId, setSelectedId] = useState(initial.document.monsters[0].id)
   const [search, setSearch] = useState('')
   const [skillId, setSkillId] = useState<string>(skills[0].id)
-  const [message, setMessage] = useState(initial.message)
+  const [message, setMessage] = useState(catalog.error || initial.message)
   const importInput = useRef<HTMLInputElement>(null)
   const monster = document.monsters.find((item) => item.id === selectedId)!
   const dirty = JSON.stringify(document) !== JSON.stringify(saved)
@@ -146,7 +151,8 @@ export function MonsterEditor() {
 
   return (
     <div className="monster-editor">
-      <header className="monster-editor__header"><div><p>LEGEND WORLD / CONFIGURATION</p><h1>怪物配置编辑器</h1></div><a href="#" onClick={(event) => { if (dirty && !window.confirm('未保存的修改将丢失，确定返回游戏？')) event.preventDefault() }}>返回游戏 ↗</a></header>
+      {/* 关联配置在新标签页打开，当前怪物草稿继续保留。 */}
+      <header className="monster-editor__header"><div><p>LEGEND WORLD / CONFIGURATION</p><h1>怪物配置编辑器</h1></div><div className="ability-editor__links"><a href="#/skill-editor" target="_blank" rel="noopener noreferrer">技能配置</a><a href="#/effect-editor" target="_blank" rel="noopener noreferrer">效果配置</a><a href="#" onClick={(event) => { if (dirty && !window.confirm('未保存的修改将丢失，确定返回游戏？')) event.preventDefault() }}>返回游戏 ↗</a></div></header>
       <div className="monster-editor__toolbar"><span>{document.monsters.length} 个怪物 · {dirty ? '有未保存修改' : '无未保存修改'}</span><div><button type="button" onClick={() => importInput.current!.click()}>导入 JSON</button><button type="button" onClick={exportFile}>导出 / 保存文件</button><input ref={importInput} type="file" accept=".json,application/json" hidden onChange={importFile} /></div></div>
       <div className="monster-editor__layout">
         <aside><div className="monster-editor__section-title"><h2>怪物列表</h2><button type="button" onClick={() => addMonster(false)}>＋ 新增</button></div><input aria-label="搜索怪物名称或 ID" placeholder="搜索名称 / ID" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -159,7 +165,7 @@ export function MonsterEditor() {
           <section><div className="monster-editor__section-title"><h3>03 / 技能配置</h3><span>{monster.skills.length} 个技能</span></div><div className="monster-editor__skill-picker"><select aria-label="选择已有技能" value={skillId} onChange={(event) => setSkillId(event.target.value)}>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.name} · {skill.type === 'active' ? '主动' : '被动'}</option>)}</select><button type="button" disabled={monster.skills.some((skill) => skill.id === skillId)} onClick={() => updateMonster({ skills: [...monster.skills, skills.find((skill) => skill.id === skillId)!] })}>＋ 关联技能</button></div>
             {monster.skills.length === 0 && <p className="monster-editor__empty">尚未关联技能，战斗时使用普通攻击。</p>}
             <ol className="monster-editor__skills">{monster.skills.map((skill, index) => <li key={`${skill.id}-${index}`}><span className="monster-editor__order">{String(index + 1).padStart(2, '0')}</span><div><strong>{skill.name}</strong><small>{skill.id} · {skill.type === 'active' ? `主动 · 耗魔 ${skill.manaCost} · 冷却 ${skill.cooldownMs / 1000} 秒` : '被动 · 属性加成'}</small></div><div className="monster-editor__skill-actions"><button type="button" aria-label={`上移${skill.name}`} disabled={index === 0} onClick={() => moveSkill(index, -1)}>↑</button><button type="button" aria-label={`下移${skill.name}`} disabled={index === monster.skills.length - 1} onClick={() => moveSkill(index, 1)}>↓</button><button type="button" onClick={() => updateMonster({ skills: monster.skills.filter((_, position) => position !== index) })}>移除</button></div></li>)}</ol>
-            <p className="monster-editor__hint">技能效果沿用已有技能定义；当前页面仅配置关联与优先级。</p>
+            <p className="monster-editor__hint">技能选项读取已保存的技能目录；关联保存当前技能快照。技能修改后，请移除并重新关联。</p>
           </section>
           <MonsterDropEditor key={monster.id} drops={monster.rewards.drops} items={dropItems} onChange={(drops) => updateMonster({ rewards: { ...monster.rewards, drops } })} />
           <footer><p role="status">{message}</p><div><button type="button" disabled={!dirty} onClick={cancelChanges}>取消修改</button><button className="monster-editor__primary" type="submit">保存配置</button></div></footer>

@@ -49,3 +49,8 @@
 .monster-editor__drop-item { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .monster-editor__drops label { width: 125px; flex-shrink: 0; }
 @media (max-width: 800px) { .monster-editor__drops li { flex-wrap: wrap; } }
+/* 三个配置页面共用入口导航，窄屏自动换行。 */
+.ability-editor__links { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+/* 玩家说明使用多行文本编辑，保留输入换行并与数值表单分开呈现。 */
+.monster-editor .ability-editor__description { margin-bottom: 24px; }
+.monster-editor textarea { width: 100%; min-width: 0; resize: vertical; font: inherit; color: #e8e5dd; background: #191d19; border: 1px solid #45483f; border-radius: 5px; padding: 10px 12px; }

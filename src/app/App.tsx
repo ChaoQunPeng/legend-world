@@ -89,7 +89,8 @@ export default function App() {
             <progress value={growth.requiredExperience === undefined ? 1 : growth.experience} max={growth.requiredExperience ?? 1} />
           </label>
         </div>
-        <a className="editor-link" href="#/monster-editor">
+        {/* 配置工具在新标签页打开，保留当前游戏和战斗状态。 */}
+        <a className="editor-link" href="#/monster-editor" target="_blank" rel="noopener noreferrer">
           配置 ↗
         </a>
       </header>
