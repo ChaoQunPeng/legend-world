@@ -31,7 +31,7 @@ const characterOptions: CharacterOptions = {
 }
 
 /** 本地体验物品：同部位武器便于查看替换，材料与战斗掉落统一进入背包。 */
-const starterItems: readonly ItemDefinition[] = [
+export const starterItems: readonly ItemDefinition[] = [
   { id: 'wood-sword', name: '木剑', type: 'equipment', quality: 'normal', equipment: { requirements: { level: 1, classes: [] }, slot: 'weapon', stats: { attack: 3 } } },
   { id: 'iron-sword', name: '精铁剑', type: 'equipment', quality: 'uncommon', equipment: { requirements: { level: 2, classes: [] }, slot: 'weapon', stats: { attack: 7 } } },
   { id: 'cloth-helmet', name: '布帽', type: 'equipment', quality: 'normal', equipment: { requirements: { level: 1, classes: [] }, slot: 'helmet', stats: { defense: 1 } } },

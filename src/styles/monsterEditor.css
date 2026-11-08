@@ -43,3 +43,9 @@
 /* 窄屏时列表与表单纵向排列，技能操作可换行。 */
 @media (max-width: 800px) { .monster-editor__layout { grid-template-columns: 190px minmax(0, 1fr); } .monster-editor__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .monster-editor form { padding: 20px; } .monster-editor__skills li { flex-wrap: wrap; } }
 @media (max-width: 580px) { .monster-editor { padding: 24px 12px; } .monster-editor__layout { grid-template-columns: 1fr; } .monster-editor aside { border-right: 0; border-bottom: 1px solid #3d4438; } .monster-editor__header, .monster-editor__toolbar, .monster-editor footer { align-items: flex-start; flex-direction: column; } .monster-editor__fields { grid-template-columns: 1fr; } .monster-editor__skill-picker { flex-wrap: wrap; } }
+/* 掉落表直接显示独立概率，窄屏换行以保留物品名称和编辑操作。 */
+.monster-editor__drops { list-style: none; padding: 0; margin: 16px 0; }
+.monster-editor__drops li { display: flex; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid #3d4438; }
+.monster-editor__drop-item { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.monster-editor__drops label { width: 125px; flex-shrink: 0; }
+@media (max-width: 800px) { .monster-editor__drops li { flex-wrap: wrap; } }

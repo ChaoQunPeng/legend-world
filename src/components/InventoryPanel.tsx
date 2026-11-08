@@ -1,3 +1,4 @@
+import { GameIcon } from './GameIcon'
 import { useState } from 'react'
 import type { EquipmentSlot, ItemType } from '../core'
 import type { InventoryView, ItemView } from '../game/panels/inventory'
@@ -61,21 +62,24 @@ export function EquipmentPanel({ equipment, onUnequip }: EquipmentPanelProps) {
 
 /** 按核心格子展示堆叠、药水与待领取掉落，丢弃必须先确认数量。 */
 export function InventoryPanel({ inventory, onEquip, onDiscard, onUse, onClaim, message }: InventoryPanelProps) {
+  // 列表仅显示名称和数量，选中物品后在下方展示真实属性与业务操作。
+  const [selectedId, setSelectedId] = useState<string | undefined>()
   const [filter, setFilter] = useState<ItemType | 'all'>('all')
   const [discardId, setDiscardId] = useState<string | undefined>()
   // 保留输入文本，支持清空后重新填写；提交时由表单约束整数范围。
   const [quantity, setQuantity] = useState('1')
   const discardItem = inventory.items.find((item) => item.id === discardId)
+  const selectedItem = inventory.items.find((item) => item.id === selectedId)
   const items = inventory.items.filter((item) => filter === 'all' || item.type === filter)
 
   return (
     <section className="inventory-panel dashboard-panel" aria-labelledby="inventory-title">
       <header className="section-heading">
-        <h2 id="inventory-title">背包</h2>
+        <h2 id="inventory-title"><GameIcon name="backpack" />背包</h2>
         <span>{inventory.usedSlots} / {inventory.capacity} 格 · {inventory.itemCount} 件</span>
       </header>
-      <p className="panel-hint">装备每件 1 格 · 材料每格 99 个 · 药水每格 20 瓶</p>
-      <p className="inventory-message" role="status">{message || '满包掉落进入待领取列表，经验照常发放。'}</p>
+      <details className="info-details"><summary>背包规则</summary><p className="panel-hint">装备每件 1 格 · 材料每格 99 个 · 药水每格 20 瓶。药水战斗中也可使用；腾出空间后需手动领取掉落。</p></details>
+      <p className="inventory-message" role="status">{message}</p>
       {discardItem && <form className="discard-confirm" aria-label="确认丢弃物品" onSubmit={(event) => {
         event.preventDefault()
         onDiscard(discardItem.id, Number(quantity))
@@ -93,22 +97,23 @@ export function InventoryPanel({ inventory, onEquip, onDiscard, onUse, onClaim, 
       </nav>
       <div className="inventory-list">
         {items.map((item) => (
-          <article key={item.id} className={`inventory-item inventory-item--${item.quality}`}>
-            <ItemDetails item={item} />
-            <div className="inventory-actions">
-              <span className="inventory-item__quantity">{item.type === 'equipment' ? '1 件 · 1 格' : `${item.quantity} / ${item.maxStack}`}</span>
-              {item.type === 'equipment' && <button type="button" disabled={!item.canEquip} title={item.equipFailure} onClick={() => onEquip(item.id)} aria-label={`穿戴${item.name}`}>{item.canEquip ? '穿戴' : item.equipFailure}</button>}
-              {item.type === 'consumable' && <button type="button" disabled={!item.canUse} onClick={() => onUse(item.id)} aria-label={`使用${item.name}`}>使用</button>}
-              <button type="button" aria-label={`丢弃${item.name}`} onClick={() => {
-                setDiscardId(item.id)
-                setQuantity('1')
-              }}>丢弃</button>
-            </div>
-          </article>
+          <button type="button" key={item.id} className="inventory-row" aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}>
+            <span className={`item-name item-name--${item.quality}`}>{item.name}</span>
+            <span className="inventory-row__quantity">x{item.quantity}</span>
+          </button>
         ))}
         {items.length === 0 && <p className="inventory-empty">{filter === 'all' ? '背包暂无物品' : `暂无${filters.find(({ value }) => value === filter)?.label}`}，战斗掉落会自动收入背包。</p>}
       </div>
-      <p className="panel-hint">药水战斗中也可使用；腾出空间后需手动领取掉落。</p>
+      {selectedItem && <div className="selected-item">
+        <ItemDetails item={selectedItem} />
+        <div className="inventory-actions">
+          {selectedItem.type === 'equipment' && <button type="button" disabled={!selectedItem.canEquip} title={selectedItem.equipFailure} onClick={() => onEquip(selectedItem.id)} aria-label={`穿戴${selectedItem.name}`}>{selectedItem.canEquip ? '穿戴' : selectedItem.equipFailure}</button>}
+          {selectedItem.type === 'consumable' && <button type="button" disabled={!selectedItem.canUse} onClick={() => onUse(selectedItem.id)} aria-label={`使用${selectedItem.name}`}>使用</button>}
+          <button type="button" onClick={() => { setDiscardId(selectedItem.id); setQuantity('1') }}>丢弃</button>
+          <button type="button" className="quiet-button" onClick={() => setSelectedId(undefined)}>关闭</button>
+        </div>
+      </div>}
+      
       <section className="pending-items" aria-labelledby="pending-items-title">
         <header className="section-heading"><h3 id="pending-items-title">待领取掉落</h3><span>{inventory.pendingItems.reduce((sum, item) => sum + item.quantity, 0)} 件</span></header>
         {inventory.pendingItems.length === 0 && <p className="panel-hint">暂无待领取掉落。</p>}

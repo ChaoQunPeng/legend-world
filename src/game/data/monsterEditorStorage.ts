@@ -42,6 +42,15 @@ export function parseMonsterDocument(json: string): MonsterEditorDocument {
         throw new Error(`${monster.name} 的技能配置格式错误。`)
       }
     }
+    // 外部 JSON 的掉落概率必须符合核心的 0～1 契约，物品需具备列表展示所需的信息。
+    for (const drop of monster.rewards.drops) {
+      if (!drop || !Number.isFinite(drop.probability) || drop.probability < 0 || drop.probability > 1
+        || !drop.item || typeof drop.item.id !== 'string' || !drop.item.id.trim()
+        || typeof drop.item.name !== 'string' || !drop.item.name.trim()
+        || !['equipment', 'consumable', 'material'].includes(drop.item.type)) {
+        throw new Error(`${monster.name} 的掉落物品格式错误，概率必须在 0～100% 之间。`)
+      }
+    }
     ids.add(monster.id)
   }
   return document

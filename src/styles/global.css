@@ -1,168 +1,225 @@
-/* 工作台使用 DOM 展示角色与背包，整页自然滚动，所有面板常驻可见。 */
+/* 主题色、字体与参考 UI 保持一致；原生 CSS 承担原稿的工具类样式。 */
 :root {
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  color: #eadbbd;
-  background: #111c29;
+  --bg-primary: #0d0f12;
+  --bg-secondary: #16191f;
+  --bg-hover: #252a33;
+  --border-color: #343a45;
+  --text-primary: #e5e7eb;
+  --text-secondary: #8b929e;
+  --color-primary: #c6a56b;
+  --color-danger: #d76a6a;
+  --color-success: #79b99a;
+  --color-magic: #b69ae0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: var(--text-primary);
+  background: var(--bg-primary);
   color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 * { box-sizing: border-box; }
-body { margin: 0; }
-button { font: inherit; cursor: pointer; }
-button:focus-visible { outline: 2px solid #eadbbd; outline-offset: 3px; }
-.world { min-height: 100svh; padding: 28px clamp(16px, 3vw, 48px) 32px; }
-.world__header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; max-width: 1800px; margin: 0 auto 28px; }
-.world__eyebrow { margin: 0 0 8px; color: #c7a875; font-size: 10px; letter-spacing: 0.35em; }
-h1 { margin: 0; font-family: "Songti SC", "SimSun", serif; font-size: 32px; font-weight: 500; letter-spacing: 0.2em; }
-.world__message { margin: 0 0 4px; color: #acb7be; font-size: 12px; letter-spacing: 0.15em; }
+body { margin: 0; touch-action: manipulation; }
+button, input { font: inherit; }
+button { cursor: pointer; transition: background-color 150ms, border-color 150ms; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+button:hover:enabled { background-color: var(--bg-hover); }
+[hidden] { display: none !important; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+.game-icon { width: 14px; height: 14px; flex-shrink: 0; }
 
-/* 桌面以三列同时展示人物、背包、战斗；每列允许内容收缩，长文本正常换行。 */
-.world__dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; gap: 20px; max-width: 1800px; margin: auto; }
-.dashboard-panel { min-width: 0; padding: 20px; border: 1px solid #c7a87540; border-radius: 14px; background: #142130; }
-.world__battle-panel > .combatant-card { margin-top: 20px; }
-.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.section-heading h2 { margin: 0; font-size: 18px; font-weight: 500; }
-.section-heading > span { color: #acb7be; font-size: 12px; }
-.panel-hint { margin: 14px 0 0; color: #8d9eab; font-size: 11px; line-height: 1.8; }
-/* 成长信息紧邻角色血条，升级后可同时观察等级、经验与资源恢复。 */
-.growth-panel { margin-top: 20px; padding: 16px; border: 1px solid #c7a87540; border-radius: 10px; background: #c7a8750c; }
-.growth-panel .section-heading h2 { font-size: 14px; color: #c7a875; }
-.growth-panel__progress-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #acb7be; }
-.growth-panel__progress-label strong { color: #eadbbd; font-weight: 500; font-variant-numeric: tabular-nums; }
-.growth-panel progress { display: block; width: 100%; height: 8px; margin-top: 10px; accent-color: #c7a875; }
-.growth-panel__increases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; font-size: 12px; color: #acb7be; }
-.growth-panel__increases li { display: flex; justify-content: space-between; gap: 6px; }
-.growth-panel__increases strong { color: #8bcba6; font-weight: 500; }
+/* 1280px 主区域、3/6/3 栏宽、16px 栏间距对应参考稿桌面布局。 */
+.world { min-height: 100svh; }
+.world__header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px max(24px, calc((100vw - 1280px) / 2)); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); box-shadow: 0 4px 6px #0000001a; }
+.world__identity { display: flex; align-items: center; gap: 8px; }
+.world__identity > span { padding: 2px 8px; font-size: 14px; font-weight: 700; color: #f59e0b; border: 1px solid #f59e0b66; border-radius: 4px; background: #451a0333; }
+.world__identity small { padding: 2px 6px; font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; }
+.header-vitals { display: flex; align-items: center; gap: 12px; margin-left: auto; padding: 2px 0; }
+.header-vital { display: block; min-width: 110px; color: #f87171; font-size: 10px; }
+.header-vital span { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 2px; }
+.header-vital b { color: var(--text-secondary); font-weight: 400; }
+progress { appearance: none; border: 0; overflow: hidden; border-radius: 999px; background: #111827; }
+progress::-webkit-progress-bar { background: #111827; }
+progress::-webkit-progress-value { background: var(--progress-color, #dc2626); transition: width 300ms; }
+progress::-moz-progress-bar { background: var(--progress-color, #dc2626); }
+.header-vital progress { display: block; width: 100%; height: 6px; border: 1px solid #1f2937; }
+.header-vital--mana { min-width: 95px; color: #c084fc; --progress-color: #9333ea; }
+.header-vital--experience { min-width: 85px; color: #fcd34d; --progress-color: #d97706; }
+.editor-link { color: var(--text-secondary); font-size: 10px; text-decoration: none; }
+.world__dashboard { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 6fr) minmax(0, 3fr); align-items: start; gap: 16px; max-width: 1280px; margin: auto; padding: 16px; }
+.dashboard-panel { min-width: 0; padding: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
+.world__battle-panel, .world__sidebar { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.section-heading h2 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+.section-heading > span { font-size: 10px; color: var(--text-secondary); }
+.panel-hint, .battle-note { margin: 8px 0 0; font-size: 11px; line-height: 1.625; color: var(--text-secondary); }
+.info-details { margin-top: 8px; font-size: 11px; color: var(--text-secondary); }
+.info-details summary { cursor: pointer; padding: 4px 0; }
+.panel-tabs { display: flex; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.panel-tabs button { padding: 4px 12px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-secondary); font-size: 12px; }
+.panel-tabs button[aria-pressed="true"] { background: #451a0399; border-color: #92400e66; color: #fbbf24; }
 
-/* 技能目录常驻显示学习条件；已学与锁定状态在窄屏也使用文本直接说明。 */
-.skill-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid #c7a87530; }
-.skill-panel .section-heading h2 { font-size: 16px; }
-.skill-message { color: #dfc28e; font-size: 12px; line-height: 1.7; }
-.skill-list { display: grid; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
-.skill-entry { padding: 14px; border: 1px solid #52606a60; border-radius: 8px; background: #111c29; }
-.skill-entry--learned { border-color: #8bcba660; }
-.skill-entry__heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.skill-entry h3 { margin: 0; font-size: 14px; font-weight: 500; }
-.skill-entry__heading span { color: #8d9eab; font-size: 11px; }
-.skill-entry__meta { color: #8d9eab; font-size: 11px; line-height: 1.7; }
-.skill-entry__effects { color: #c7b68e; font-size: 12px; line-height: 1.7; }
-.skill-entry button { padding: 7px 12px; border: 1px solid #c7a87580; border-radius: 6px; background: #263746; color: #eadbbd; font-size: 12px; }
-.skill-entry button:disabled { cursor: default; opacity: 0.6; }
-.combatant-card { padding: 18px 20px; border: 1px solid #c7a87540; border-radius: 12px; background: #111c29ed; }
-.combatant-card__header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
-.combatant-card__category { margin: 0 0 6px; color: #acb7be; font-size: 11px; }
-.combatant-card h2 { margin: 0; font-size: 20px; font-weight: 500; }
-.combatant-card__detail { color: #c7a875; font-size: 12px; }
-.combatant-card__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0; font-size: 12px; }
-.combatant-card__stats div { display: flex; justify-content: space-between; gap: 6px; }
-.combatant-card__stats dt { color: #acb7be; }
-.combatant-card__stats dd { margin: 0; font-variant-numeric: tabular-nums; }
-
-/* 挂机状态与操作分行，复活入口出现时也能在三列工作台内正常换行。 */
-.battle-controls { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
-.battle-controls__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.battle-controls__status { margin: 0; color: #eadbbd; font-size: 20px; }
-.battle-controls__hint { margin: 8px 0 0; color: #acb7be; font-size: 11px; line-height: 1.6; }
-.battle-controls button { flex-shrink: 0; padding: 12px 18px; border: 1px solid #dfc28e; border-radius: 8px; background: #c7a875; color: #172536; font: inherit; font-size: 14px; cursor: pointer; }
-.battle-controls button:disabled { background: #374750; border-color: #52606a; color: #bac4ca; cursor: default; }
-.battle-controls button:focus-visible { outline: 2px solid #eadbbd; outline-offset: 4px; }
-.battle-action { margin: 16px 0 0; padding: 10px 12px; border-left: 2px solid #c7a875; background: #c7a87512; font-size: 13px; }
-.battle-action strong { float: right; color: #edac92; }
-/* 数字使用核心记录的实际扣血量；同一条记录不因页面重渲染反复播放。 */
-.combatant-card__vitals { position: relative; margin-bottom: 16px; }
-.combatant-card__health-label { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; }
-.combatant-card__health-label strong { font-weight: 500; font-variant-numeric: tabular-nums; }
-.combatant-card__health { display: block; width: 100%; height: 8px; margin: 8px 0; border: 0; border-radius: 8px; overflow: hidden; background: #263746; accent-color: #bd7364; }
-.combatant-card__health::-webkit-progress-bar { background: #263746; }
-.combatant-card__health::-webkit-progress-value { background: #bd7364; transition: width 0.35s ease; }
-.combatant-card__health::-moz-progress-bar { background: #bd7364; }
-.combatant-card__mana { color: #8db8d4; font-size: 11px; }
-.combatant-card__damage { position: absolute; right: 8px; top: -4px; color: #ffc6a8; font-size: 26px; font-weight: 700; text-shadow: 0 2px 6px #111c29; pointer-events: none; animation: damage-rise 0.9s ease-out forwards; }
-.battle-rewards { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 16px 0; padding: 14px; border-radius: 8px; background: #c7a8750c; color: #acb7be; font-size: 13px; }
-.battle-rewards strong { margin-left: 6px; color: #eadbbd; font-weight: 500; }
-.battle-log h2 { margin: 0 0 12px; color: #c7a875; font-size: 13px; font-weight: 500; }
-.battle-log ol { height: 200px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
-.battle-log li { padding: 9px 0; border-top: 1px solid #52606a40; color: #acb7be; font-size: 12px; line-height: 1.7; }
-.battle-log time { display: inline-block; min-width: 30px; color: #788e9b; font-variant-numeric: tabular-nums; }
-.battle-log .battle-log__result { color: #eadbbd; }
-.battle-note { margin: 14px 0 0; color: #788e9b; font-size: 11px; line-height: 1.7; }
-
-/* 角色与怪物的基础信息始终展开，各面板的标题拥有独立 ID。 */
-.unit-info-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid #c7a87530; }
-.unit-info-panel h2 { margin: 0; color: #c7a875; font-size: 14px; font-weight: 500; }
-.unit-info-panel__fields { display: grid; gap: 10px; margin: 16px 0 0; font-size: 12px; }
+/* 角色属性使用原稿的紧凑信息块，装备采用横向槽位而非大卡片。 */
+.combatant-card { padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); }
+.combatant-card__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.combatant-card__category { margin: 0 0 4px; font-size: 10px; color: var(--text-secondary); }
+.combatant-card h2 { margin: 0; font-size: 14px; color: #fbbf24; }
+.combatant-card__detail { font-size: 10px; color: var(--text-secondary); }
+.combatant-card__vitals { position: relative; margin-bottom: 10px; }
+.combatant-card__health-label { display: flex; justify-content: space-between; font-size: 11px; }
+.combatant-card__health-label strong { font-weight: 400; }
+.combatant-card__health { display: block; width: 100%; height: 6px; margin: 4px 0; }
+.combatant-card__mana { color: #c084fc; font-size: 10px; }
+.combatant-card__damage { position: absolute; right: 8px; top: -4px; color: #f87171; font-size: 22px; font-weight: 700; pointer-events: none; animation: damage-rise 900ms ease-out forwards; }
+.combatant-card__stats { display: grid; gap: 6px; margin: 0; font-size: 12px; }
+.combatant-card__stats div { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 4px; border-bottom: 1px solid #343a4566; }
+.combatant-card__stats dt { color: var(--text-secondary); }
+.combatant-card__stats dd { margin: 0; font-weight: 600; }
+.growth-panel { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+.growth-panel__progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); }
+.growth-panel__progress-label strong { color: #fcd34d; font-weight: 400; }
+.growth-panel progress { display: block; width: 100%; height: 6px; margin-top: 6px; --progress-color: #d97706; }
+.growth-panel__increases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 11px; color: var(--text-secondary); }
+.growth-panel__increases li { display: flex; justify-content: space-between; }
+.growth-panel__increases strong { color: var(--color-success); font-weight: 400; }
+.unit-info-panel { padding-top: 8px; }
+.unit-info-panel h2 { margin: 0; font-size: 12px; }
+.unit-info-panel__fields { display: grid; gap: 8px; margin: 12px 0 0; font-size: 11px; }
 .unit-info-panel__fields div { display: flex; justify-content: space-between; gap: 12px; }
-.unit-info-panel__fields dt { flex-shrink: 0; color: #acb7be; }
+.unit-info-panel__fields dt { flex-shrink: 0; color: var(--text-secondary); }
 .unit-info-panel__fields dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.equipment-grid { display: grid; gap: 8px; }
+.equipment-slot { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; }
+.equipment-slot__label { color: var(--text-secondary); font-size: 11px; }
+.equipment-slot__empty { margin: 0; color: #4b5563; }
+.equipment-slot .item-details__meta, .equipment-slot .item-details__bonuses { font-size: 10px; }
 
-/* 装备部位与物品卡片以文字直接说明品质、部位和属性，穿脱按钮保持可见。 */
-.equipment-panel { margin-top: 24px; }
-.equipment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.equipment-slot { display: flex; flex-direction: column; align-items: flex-start; min-height: 140px; gap: 10px; padding: 12px; border: 1px dashed #52606a80; border-radius: 8px; background: #111c29; }
-.equipment-slot--occupied { border-style: solid; border-color: #c7a87560; }
-.equipment-slot__label { color: #acb7be; font-size: 11px; }
-.equipment-slot__empty { margin: auto; color: #718393; font-size: 12px; }
-.equipment-slot button { margin-top: auto; }
-.item-details { display: flex; min-width: 0; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
-.item-name { font-size: 14px; font-weight: 500; }
-.item-name--normal { color: #eadbbd; }
-.item-name--uncommon { color: #8bcba6; }
-.item-name--rare { color: #8cbce9; }
-.item-name--epic { color: #c39aea; }
-.item-details__meta { color: #8d9eab; font-size: 11px; }
-.item-details__bonuses { color: #c7b68e; font-size: 12px; line-height: 1.6; }
-.inventory-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-.inventory-filters button, .inventory-item button, .equipment-slot button { padding: 7px 12px; border: 1px solid #c7a87550; border-radius: 6px; background: #263746; color: #eadbbd; font-size: 12px; }
-.inventory-filters button[aria-pressed="true"] { border-color: #c7a875; background: #3a4141; }
-.inventory-item button:hover, .equipment-slot button:hover { border-color: #dfc28e; background: #354650; }
-.inventory-item button:disabled { cursor: default; color: #8d9eab; background: #202e3b; border-color: #52606a60; }
-.inventory-list { display: grid; gap: 10px; }
-.inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; border: 1px solid #52606a60; border-left: 3px solid #7b8c97; border-radius: 8px; background: #111c29; }
-.inventory-item--uncommon { border-left-color: #8bcba6; }
-.inventory-item--rare { border-left-color: #8cbce9; }
-.inventory-item--epic { border-left-color: #c39aea; }
-.inventory-item button, .inventory-item__quantity { flex-shrink: 0; }
-.inventory-item__quantity { color: #c7a875; font-size: 14px; font-variant-numeric: tabular-nums; }
-.inventory-empty { padding: 32px 16px; color: #8d9eab; text-align: center; font-size: 13px; line-height: 1.8; }
+/* 地图尺寸、空格文字、实体色与选中光晕对应原稿；网格不承担移动规则。 */
+.battlefield { box-shadow: 0 10px 15px #0000001a; }
+.battlefield .section-heading { margin-bottom: 10px; }
+.battlefield .section-heading h2 { font-weight: 400; }
+.battlefield .section-heading h2 strong { color: var(--text-primary); }
+.battlefield .game-icon { color: #f59e0b; }
+.battlefield__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 460px; aspect-ratio: 1; margin: auto; padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: inset 0 2px 4px #0000000d; }
+.battlefield__cell { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; min-width: 0; border: 1px solid transparent; border-radius: 4px; font-size: 14px; font-weight: 600; color: #e5e7eb66; user-select: none; }
+.battlefield__cell strong { font-size: inherit; letter-spacing: .05em; }
+.battlefield__cell--player { color: var(--color-primary); background: #451a034d; box-shadow: 0 0 0 1px #f59e0b99; text-shadow: 0 0 6px #c6a56b33; }
+.battlefield__cell--monster { color: var(--color-danger); background: #451a0366; border-color: #f59e0b; box-shadow: 0 0 8px #c6a56b59; transform: scale(1.02); }
+.battlefield__cell progress { position: absolute; bottom: 4px; left: 4px; width: calc(100% - 8px); height: 2px; --progress-color: #ef4444; }
+.battle-target { padding: 12px; border-color: #d9770666; box-shadow: 0 4px 6px #0000001a; }
+.battle-controls { display: flex; flex-direction: column; gap: 10px; }
+.battle-controls__status { margin: 0; font-size: 12px; color: #fbbf24; }
+.battle-controls__hint { margin: 4px 0 0; font-size: 11px; color: var(--text-secondary); }
+.battle-controls__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.battle-controls button { min-height: 44px; padding: 8px 12px; border: 1px solid #991b1b99; border-radius: 4px; background: #450a0a66; color: #fca5a5; font-size: 12px; font-weight: 600; }
+.battle-controls button:nth-child(2) { border-color: var(--border-color); background: #1f2937; color: #d1d5db; font-weight: 400; }
+.battle-controls button:disabled { opacity: .4; }
+.target-heading { display: flex; align-items: center; gap: 8px; padding: 8px 0; margin-top: 8px; border-bottom: 1px solid var(--border-color); }
+.target-heading strong { color: var(--color-danger); font-size: 16px; }
+.target-heading span { padding: 0 4px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-secondary); font-size: 10px; }
+.target-health { display: flex; justify-content: space-between; margin: 6px 0 2px; color: var(--text-secondary); font-size: 11px; }
+.target-health__blocks { color: #ef4444; font-size: 12px; letter-spacing: -.05em; }
+.target-health__blocks span { color: #374151; }
+.battle-action { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; font-size: 11px; color: var(--text-secondary); }
+.battle-action strong { color: #f87171; }
+.battle-rewards { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; font-size: 11px; color: var(--text-secondary); }
+.battle-rewards strong { color: #fcd34d; font-weight: 400; }
+.battle-log { padding: 12px; }
+.battle-log .section-heading { padding-bottom: 4px; margin-bottom: 6px; }
+.battle-log button { display: flex; align-items: center; padding: 0; border: 0; background: transparent; font-size: 11px; color: #f59e0b; }
+.battle-log ol { max-height: 80px; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
+.battle-log ol.battle-log__expanded { max-height: 256px; }
+.battle-log li { display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; color: #d1d5db; font-size: 12px; line-height: 1.625; }
+.battle-log time { flex-shrink: 0; padding-top: 2px; color: #6b7280; font-size: 10px; }
+.battle-log__result { color: #fcd34d !important; font-weight: 600; }
 
-@keyframes damage-rise {
-  from { opacity: 1; transform: translateY(8px); }
-  to { opacity: 0; transform: translateY(-30px); }
+/* 背包先展示紧凑列表，详情和操作随选中项展开，与参考稿保持同一层级。 */
+.item-details { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.item-name { font-size: 12px; font-weight: 400; }
+.item-name--normal { color: var(--text-primary); }
+.item-name--uncommon { color: var(--color-success); }
+.item-name--rare { color: var(--color-magic); font-weight: 600; }
+.item-name--epic { color: #c084fc; font-weight: 600; }
+.item-details__meta, .item-details__bonuses { color: var(--text-secondary); font-size: 11px; line-height: 1.625; }
+.inventory-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.inventory-filters button { padding: 4px 6px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-secondary); font-size: 10px; }
+.inventory-filters button[aria-pressed="true"] { border-color: #f59e0b; background: #451a0333; color: #fbbf24; }
+.inventory-message, .skill-message { margin: 8px 0; color: #fcd34d; font-size: 11px; line-height: 1.625; }
+.inventory-message:empty, .skill-message:empty { display: none; }
+.inventory-list { display: grid; gap: 6px; max-height: 208px; overflow-y: auto; padding-right: 4px; }
+.inventory-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); text-align: left; }
+.inventory-row[aria-pressed="true"] { border-color: #f59e0b; background: #451a0333; }
+.inventory-row__quantity { flex-shrink: 0; font-size: 11px; color: var(--text-secondary); }
+.selected-item { padding: 10px; margin-top: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; }
+.selected-item .item-name { color: #fbbf24; font-weight: 600; }
+.inventory-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.selected-item .inventory-actions { justify-content: flex-start; margin-top: 8px; }
+.inventory-actions button, .equipment-slot button, .discard-confirm button { padding: 4px 10px; border: 1px solid #065f4666; border-radius: 4px; background: #022c2299; color: #6ee7b7; font-size: 11px; }
+.inventory-actions button:disabled { opacity: .4; }
+.inventory-actions .quiet-button { border-color: transparent; background: transparent; color: var(--text-secondary); }
+.inventory-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; }
+.inventory-item__quantity { font-size: 11px; color: var(--text-secondary); }
+.inventory-empty { margin: 0; padding: 12px 0; color: var(--text-secondary); font-size: 11px; line-height: 1.625; }
+.pending-items { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+.pending-items h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.discard-confirm { display: grid; gap: 8px; margin: 10px 0; padding: 10px; border: 1px solid #991b1b99; border-radius: 4px; background: #450a0a66; font-size: 11px; }
+.discard-confirm label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.discard-confirm input { width: 70px; padding: 6px; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; }
+.discard-confirm p { margin: 0; color: var(--text-secondary); }
+
+/* 技能卡保持左文右按钮，限制列表高度，使右栏可同时看到实体列表。 */
+.skill-list { display: grid; gap: 8px; max-height: 224px; overflow-y: auto; margin: 12px 0 0; padding: 0 4px 0 0; list-style: none; }
+.skill-entry { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; }
+.skill-entry__content { min-width: 0; }
+.skill-entry__heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.skill-entry h3 { margin: 0; color: #d8b4fe; font-size: 12px; font-weight: 600; }
+.skill-entry__heading span { color: var(--text-secondary); font-size: 10px; }
+.skill-entry__meta, .skill-entry__effects { margin: 4px 0; color: var(--text-secondary); font-size: 11px; line-height: 1.625; }
+.skill-entry button { flex-shrink: 0; max-width: 88px; min-width: 44px; min-height: 44px; padding: 4px 8px; background: #3b076499; border: 1px solid #6b21a899; border-radius: 4px; color: #e9d5ff; font-size: 11px; }
+.skill-entry button:disabled { color: #4b5563; border-color: #1f2937; background: #111827; }
+.entity-radar { padding: 12px; }
+.entity-radar .section-heading { padding-bottom: 6px; margin-bottom: 8px; }
+.entity-radar .game-icon { color: #f59e0b; }
+.entity-radar__row { display: flex; justify-content: space-between; gap: 6px; padding: 6px; border-radius: 4px; background: var(--bg-primary); font-size: 12px; color: var(--color-danger); }
+.entity-radar__row small { color: var(--text-secondary); font-size: 10px; }
+.game-navigation { display: none; }
+
+/* 与参考稿相同，1024px 以下由底部入口切换面板，640px 以下缩小留白。 */
+@media (max-width: 1023px) {
+  .world__dashboard { display: block; padding-bottom: 80px; }
+  .world__character, .world__battle-panel, .world__sidebar, .world__inventory, .world__skills, .entity-radar { display: none; }
+  .world__dashboard[data-active-tab="character"] .world__character,
+  .world__dashboard[data-active-tab="inventory"] .world__sidebar,
+  .world__dashboard[data-active-tab="inventory"] .world__inventory,
+  .world__dashboard[data-active-tab="skills"] .world__sidebar,
+  .world__dashboard[data-active-tab="skills"] .world__skills { display: block; }
+  .world__dashboard[data-active-tab="explore"] .world__battle-panel,
+  .world__dashboard[data-active-tab="logs"] .world__battle-panel { display: flex; }
+  .game-navigation { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; display: flex; justify-content: space-around; padding: 4px 8px max(4px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border-color); background: var(--bg-secondary); box-shadow: 0 -4px 6px #0000001a; }
+  .game-navigation button { display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-height: 44px; padding: 6px 8px; border: 0; background: transparent; font-size: 10px; color: var(--text-secondary); }
+  .game-navigation .game-icon { width: 16px; height: 16px; margin-bottom: 2px; }
+  .game-navigation button[aria-current="page"] { color: #fbbf24; font-weight: 700; }
 }
-
-/* 平板保留角色与背包并排，战斗区移至下方；手机按人物、背包、战斗顺序排列。 */
-@media (max-width: 1100px) {
-  .world__dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .world__battle-panel { grid-column: 1 / -1; }
+@media (max-width: 639px) {
+  .world__header { padding: 8px 12px; }
+  .world__identity > span { font-size: 12px; }
+  .world__identity small { font-size: 11px; }
+  .header-vitals { order: 3; width: 100%; margin: 0; }
+  .header-vital { flex: 1; }
+  .world__dashboard { padding: 8px 8px calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .world__battle-panel { gap: 12px; }
+  .dashboard-panel { padding: 12px; }
+  .battlefield { padding: 10px; }
+  .battlefield__grid { gap: 4px; padding: 6px; }
+  .battlefield__cell { font-size: 12px; }
+  .target-heading strong { font-size: 14px; }
 }
-@media (max-width: 680px) {
-  .world { padding: 20px 12px; }
-  .world__header { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
-  .world__dashboard { grid-template-columns: minmax(0, 1fr); }
-  .world__battle-panel { grid-column: auto; }
-  .dashboard-panel { padding: 16px; }
-  .combatant-card { padding: 16px; }
-}
-
+@keyframes damage-rise { from { opacity: 1; transform: translateY(8px); } to { opacity: 0; transform: translateY(-30px); } }
 @media (prefers-reduced-motion: reduce) {
-  .combatant-card__damage { animation: none; font-size: 18px; }
-  .combatant-card__health::-webkit-progress-value { transition: none; }
-}
-
-/* 背包操作与数量确认在窄屏换行，避免挤压物品名称。 */
-.inventory-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
-.inventory-message { min-height: 2.8em; color: #dfc28e; font-size: 13px; line-height: 1.6; }
-.discard-confirm { display: grid; gap: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #dfb28b; border-radius: 8px; background: #302a29; }
-.discard-confirm label { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px; }
-.discard-confirm input { width: 80px; padding: 8px; color: #f3e4ca; background: #111c29; border: 1px solid #c7a87580; border-radius: 4px; }
-.discard-confirm p { margin: 0; font-size: 12px; color: #d5bda4; }
-.discard-confirm button { padding: 7px 12px; color: #eadbbd; background: #263746; border: 1px solid #c7a87580; border-radius: 6px; }
-.inventory-actions button:disabled { cursor: default; opacity: 0.45; }
-.pending-items { margin-top: 24px; padding-top: 20px; border-top: 1px solid #52606a60; }
-.pending-items h3 { margin: 0; font-size: 15px; }
-@media (max-width: 600px) {
-  .inventory-item { flex-wrap: wrap; }
-  .inventory-actions { margin-left: auto; }
+  .combatant-card__damage { animation: none; }
+  progress::-webkit-progress-value { transition: none; }
 }

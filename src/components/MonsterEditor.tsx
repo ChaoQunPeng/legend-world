@@ -3,6 +3,8 @@ import type { ChangeEvent, FormEvent } from 'react'
 import type { MonsterDefinition } from '../core'
 import type { CombatStats } from '../core/combat/Combatant'
 import { localSkills } from '../game/data/localSkills'
+import { starterItems } from '../game/data/localWorld'
+import { MonsterDropEditor } from './MonsterDropEditor'
 import { createMonsterDocument, loadMonsterDocument, parseMonsterDocument, saveMonsterDocument } from '../game/data/monsterEditorStorage'
 import '../styles/monsterEditor.css'
 
@@ -42,6 +44,11 @@ export function MonsterEditor() {
   const importInput = useRef<HTMLInputElement>(null)
   const monster = document.monsters.find((item) => item.id === selectedId)!
   const dirty = JSON.stringify(document) !== JSON.stringify(saved)
+  // 物品目录包含项目已有物品和全部怪物掉落，导入文件中的物品也可以再次关联。
+  const dropItems = [...new Map([
+    ...starterItems,
+    ...document.monsters.flatMap((item) => item.rewards.drops.map((drop) => drop.item)),
+  ].map((item) => [item.id, item])).values()]
 
   /** 刷新或关闭页面前提醒用户处理尚未保存的草稿。 */
   useEffect(() => {
@@ -152,8 +159,9 @@ export function MonsterEditor() {
           <section><div className="monster-editor__section-title"><h3>03 / 技能配置</h3><span>{monster.skills.length} 个技能</span></div><div className="monster-editor__skill-picker"><select aria-label="选择已有技能" value={skillId} onChange={(event) => setSkillId(event.target.value)}>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.name} · {skill.type === 'active' ? '主动' : '被动'}</option>)}</select><button type="button" disabled={monster.skills.some((skill) => skill.id === skillId)} onClick={() => updateMonster({ skills: [...monster.skills, skills.find((skill) => skill.id === skillId)!] })}>＋ 关联技能</button></div>
             {monster.skills.length === 0 && <p className="monster-editor__empty">尚未关联技能，战斗时使用普通攻击。</p>}
             <ol className="monster-editor__skills">{monster.skills.map((skill, index) => <li key={`${skill.id}-${index}`}><span className="monster-editor__order">{String(index + 1).padStart(2, '0')}</span><div><strong>{skill.name}</strong><small>{skill.id} · {skill.type === 'active' ? `主动 · 耗魔 ${skill.manaCost} · 冷却 ${skill.cooldownMs / 1000} 秒` : '被动 · 属性加成'}</small></div><div className="monster-editor__skill-actions"><button type="button" aria-label={`上移${skill.name}`} disabled={index === 0} onClick={() => moveSkill(index, -1)}>↑</button><button type="button" aria-label={`下移${skill.name}`} disabled={index === monster.skills.length - 1} onClick={() => moveSkill(index, 1)}>↓</button><button type="button" onClick={() => updateMonster({ skills: monster.skills.filter((_, position) => position !== index) })}>移除</button></div></li>)}</ol>
-            <p className="monster-editor__hint">技能效果沿用已有技能定义；当前页面仅配置关联与优先级。已有掉落配置随怪物完整保留。</p>
+            <p className="monster-editor__hint">技能效果沿用已有技能定义；当前页面仅配置关联与优先级。</p>
           </section>
+          <MonsterDropEditor key={monster.id} drops={monster.rewards.drops} items={dropItems} onChange={(drops) => updateMonster({ rewards: { ...monster.rewards, drops } })} />
           <footer><p role="status">{message}</p><div><button type="button" disabled={!dirty} onClick={cancelChanges}>取消修改</button><button className="monster-editor__primary" type="submit">保存配置</button></div></footer>
         </form>
       </div>
